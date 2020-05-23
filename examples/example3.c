@@ -20,11 +20,23 @@
 void main()
 {
 	TJSON_t *json = NULL;
-	
-	TJSON_t *node1 = tanto_init_node("hello", "world!", 1);
-	TJSON_t *node2 = tanto_init_node("parser", "tanto", 1);
-	tanto_push(&json, node1);
-	tanto_push(&json, node2);
+
+	TJSON_t *root = tanto_init_node(TANTO_JSON_OBJ, "root", NULL);
+	tanto_push(&json, root);
+
+	TJSON_t *node1 = tanto_init_node(TANTO_JSON_FIELD, "hello", "world!");
+	TJSON_t *node2 = tanto_init_node(TANTO_JSON_FIELD, "parser", "tanto");
+	TJSON_t *node3 = tanto_init_node(TANTO_JSON_OBJ, "library", NULL);
+	TJSON_t *node4 = tanto_init_node(TANTO_JSON_FIELD, "lex", "lexer");
+	tanto_child_push(&root, node1);
+	tanto_child_push(&root, node2);
+	tanto_child_push(&root, node3);
+	tanto_child_push(&root, node4);
+
+	TJSON_t *node31 = tanto_init_node(TANTO_JSON_FIELD ,"usage", "example.c");
+	tanto_child_push(&node3, node31);
+
+	tanto_print(json->child, 1);
 		
-	tanto_write_file("hello_world.json", json);
+	//tanto_write_file("hello_world.json", json);
 }

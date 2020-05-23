@@ -28,6 +28,10 @@
 
 #define IS_EMPTY_LIST(lsit)  ((list) == NULL)
 
+#define TANTO_JSON_OBJ     0
+#define TANTO_JSON_FIELD   1
+#define TANTO_JSON_ARRAY   2
+
 typedef struct __stack_node
 {
 	char data;	
@@ -69,7 +73,7 @@ char stack_pop(S_NODE_t **stack)
 	return data;
 }
 
-TJSON_t *tanto_init_node(char *key, char *value, int type)
+TJSON_t *tanto_init_node(int type, char *key, char *value)
 {
 	TJSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
 	if (node == NULL) return NULL;
@@ -88,6 +92,14 @@ void tanto_push(TJSON_t **json, TJSON_t *node)
 {
 	TJSON_t *current = *json;
 	*json = node;
+
+	node->next = current;	
+}
+
+void tanto_child_push(TJSON_t **json, TJSON_t *node)
+{
+	TJSON_t *current = (*json)->child;
+	(*json)->child = node;
 
 	node->next = current;	
 }
@@ -112,7 +124,7 @@ TJSON_t *tanto_find(TJSON_t *json, char *key)
 	return NULL;
 }
 
-void tanto_print(TJSON_t *json)
+void tanto_print(TJSON_t *json, int level)
 {
 	int comma;
 	comma = 0;
@@ -120,24 +132,30 @@ void tanto_print(TJSON_t *json)
 	printf("%c\n", '{');
 	while (json != NULL) {
 		if (comma) printf("%c\n", ',');
-		printf("\t");
-		printf("\"%s\":", json->key);
-		printf(" \"%s\"", json->value);
+		printf( "%*s", level*4, "");		
+		printf("\"%s\": ", json->key);
+		if (json->value != NULL) printf("\"%s\"", json->value);
 		comma = 1;
+		if (json->child != NULL) {
+			tanto_print(json->child, level+1);
+		}
 		json = json->next;
 	}
-	printf("\n%c\n", '}');		
+	printf( "\n%*s%c", (level-1)*4, "", '}');
+	//printf("\n%c\n", '}');		
 }
 
 void tanto_print_addr(TJSON_t *json)
 {
 	while (json != NULL) {
 
-		printf("\t%s\n", "  ----------");
+		printf("\t%s\n", "  --------------------");
 		printf("%8d", json);
 		printf("%s", " | ");
-		printf("%8d %s\n", json->next, "|");
-		printf("\t%s\n\n", "  ----------");		
+		printf("%8d %s", json->next, "|");
+		printf("%8d %s\n", json->child, "|");
+		printf("\t%s\n\n", "  --------------------");
+		tanto_print_addr(json->child);
 
 		json = json->next;
 	}	
@@ -173,7 +191,7 @@ TJSON_t *tanto_lex(char *chunk)
 	/*
 	 * type
 	 */
-	type = 0;
+	type = TANTO_JSON_FIELD;
 		
 	/* 
 	 * value 
@@ -187,7 +205,7 @@ TJSON_t *tanto_lex(char *chunk)
 	memcpy(value, chunk, step);
 	value[step] = '\0';
 
-	node = tanto_init_node(key, value, type);
+	node = tanto_init_node(type, key, value);
 
 	return node;
 }
