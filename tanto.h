@@ -1,5 +1,5 @@
-#ifndef _TANTO_H
-#define _TANTO_H
+#ifndef __TANTO_H
+#define __TANTO_H
 
 /*
  * This program is free software; you can redistribute it and/or modify it
@@ -335,4 +335,4 @@ int tanto_balance_str(char *exp)
 	return 0;
 }
 
-#endif  //_TANTO_H
+#endif  //__TANTO_H
