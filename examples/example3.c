@@ -19,30 +19,48 @@
 */
 void main()
 {
-	TJSON_t *root = NULL;
-
-	TJSON_t *node1 = tanto_init_node(TANTO_JSON_FIELD, "hello", "world!");
-	TJSON_t *node2 = tanto_init_node(TANTO_JSON_FIELD, "parser", "tanto");
-	TJSON_t *node3 = tanto_init_node(TANTO_JSON_OBJ, "library", NULL);
-	TJSON_t *node4 = tanto_init_node(TANTO_JSON_FIELD, "lex", "lexer");
-	tanto_push(&root, node1);
-	tanto_push(&root, node2);
-	tanto_push(&root, node3);
-	tanto_push(&root, node4);
-
-	TJSON_t *node31 = tanto_init_node(TANTO_JSON_FIELD ,"usage", "example.c");
-	TJSON_t *node32 = tanto_init_node(TANTO_JSON_FIELD ,"tests", "test.c");	
-	tanto_push(&node3->child, node31);	
-	tanto_push(&node3->child, node32);
+	TJSON_t *json = NULL;
+	tanto_init(&json);
 
 
-	TJSON_t *node5 = tanto_init_node(TANTO_JSON_FIELD, "color", "red");
-	tanto_push(&root, node5);
+	TJSON_t *server = tanto_create_node(TANTO_JSON_OBJ, "server", NULL);
+	tanto_push(&json, server);
 
-	TJSON_t *node33 = tanto_init_node(TANTO_JSON_FIELD ,"main", "main.c");	
-	tanto_push(&node3->child, node33);
+	TJSON_t *path = tanto_create_node(TANTO_JSON_FIELD, "path", "http://www.gnu.org/licenses/");
+	tanto_push(&json, path);
+
 	
-	//tanto_print(root);
+	TJSON_t *node2 = tanto_create_node(TANTO_JSON_FIELD, "parser", "tanto");
+	TJSON_t *node3 = tanto_create_node(TANTO_JSON_OBJ, "library", NULL);
+	TJSON_t *node4 = tanto_create_node(TANTO_JSON_FIELD, "lex", "lexer");	
+	tanto_push(&json, node2);
+	tanto_push(&server, node3);
+	tanto_push(&server, node4);
+
+	TJSON_t *node31 = tanto_create_node(TANTO_JSON_FIELD ,"usage", "example.c");
+	TJSON_t *node32 = tanto_create_node(TANTO_JSON_FIELD ,"tests", "test.c");	
+	tanto_push(&node3, node31);	
+	tanto_push(&node3, node32);
+
+
+	TJSON_t *node5 = tanto_create_node(TANTO_JSON_FIELD, "color", "red");
+	tanto_push(&json, node5);
+
+	TJSON_t *node33 = tanto_create_node(TANTO_JSON_FIELD ,"main", "main.c");	
+	tanto_push(&json, node33);
+
+
+
+
+	TJSON_t *functions = tanto_create_node(TANTO_JSON_ARRAY, "functions", NULL);
+	tanto_push(&json, functions);
+	TJSON_t *function1 = tanto_create_node(TANTO_JSON_FIELD ,"pop", NULL);	
+	tanto_push(&functions, function1);
+	TJSON_t *function2 = tanto_create_node(TANTO_JSON_FIELD ,"push", NULL);	
+	tanto_push(&functions, function2);
+	
+	
+	//tanto_print(json);
 		
-	tanto_write_file("hello_world.json", root);
+	tanto_write_file("hello_world.json", json);
 }

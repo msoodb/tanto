@@ -29,8 +29,8 @@
 #define IS_EMPTY_LIST(lsit)  ((list) == NULL)
 
 #define TANTO_JSON_OBJ     0
-#define TANTO_JSON_FIELD   1
-#define TANTO_JSON_ARRAY   2
+#define TANTO_JSON_ARRAY   1
+#define TANTO_JSON_FIELD   2
 
 typedef struct __stack_node
 {
@@ -73,7 +73,7 @@ char stack_pop(S_NODE_t **stack)
 	return data;
 }
 
-TJSON_t *tanto_init_node(int type, char *key, char *value)
+TJSON_t *tanto_create_node(int type, char *key, char *value)
 {
 	TJSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
 	if (node == NULL) return NULL;
@@ -88,10 +88,26 @@ TJSON_t *tanto_init_node(int type, char *key, char *value)
 	return node;
 }
 
+void tanto_init(TJSON_t **json)
+{
+	TJSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
+	if (node == NULL) return;
+
+	node->child = NULL;
+	node->next = NULL;
+
+	node->key = NULL;
+	node->value = NULL;
+	node->type = TANTO_JSON_OBJ;
+	
+	*json = node;
+}
+
+
 void tanto_push(TJSON_t **json, TJSON_t *node)
 {
-	node->next = *json;
-	*json = node;
+	node->next = (*json)->child;
+	(*json)->child = node;
 }
 
 TJSON_t *tanto_pop(TJSON_t **json)
@@ -114,37 +130,48 @@ TJSON_t *tanto_find(TJSON_t *json, char *key)
 	return NULL;
 }
 
-void _tanto_print(TJSON_t *json, int level)
+void _tanto_print(TJSON_t *json, FILE *fp, int type, int level)
 {
+	
 	int comma;
 	comma = 0;
 
-	if (level < 1) level = 1; 
+	if (level < 1) level = 1;
+	char start, end;
+	start = '{';
+	end = '}';
+
+	if (type == TANTO_JSON_ARRAY){
+		start = '[';
+		end = ']';
+	}
 	
-	printf("%c\n", '{');
+	fprintf(fp, "%c\n", start);
 	while (json != NULL) {
 
-		if (comma) printf("%c\n", ',');
+		if (comma) fprintf(fp, "%c\n", ',');
 
-		printf( "%*s", level*4, "");		
-		printf("\"%s\": ", json->key);
-
-		if (json->value != NULL) printf("\"%s\"", json->value);
+		fprintf(fp, "%*s", level*2, "");
+		
+		if (json->key != NULL) fprintf(fp, "\"%s\": ", json->key);
+		if (json->value != NULL) fprintf(fp, "\"%s\"", json->value);
+		
 		comma = 1;
 		
-		if (json->type == TANTO_JSON_OBJ) {
-			_tanto_print(json->child, level+1);
+		if ((json->type == TANTO_JSON_OBJ) ||
+		    (json->type == TANTO_JSON_ARRAY)) {
+			_tanto_print(json->child, fp, json->type, level+1);
 		}
 		
 		json = json->next;
 	}
-	printf( "\n%*s%c", (level-1)*4, "", '}');
-	if (level == 1) printf("\n");
+	fprintf(fp, "\n%*s%c", (level-1)*2, "", end);
+	if (level == 1) fprintf(fp, "\n");
 }
 
 void tanto_print(TJSON_t *json)
 {
-	_tanto_print(json, 1);
+	_tanto_print(json->child, stdout, json->type, 1);
 }
 
 
@@ -208,7 +235,7 @@ TJSON_t *tanto_lex(char *chunk)
 	memcpy(value, chunk, step);
 	value[step] = '\0';
 
-	node = tanto_init_node(type, key, value);
+	node = tanto_create_node(type, key, value);
 
 	return node;
 }
@@ -265,41 +292,13 @@ char *tanto_read_file(const char *file)
 	return stream;
 }
 
-void _tanto_write_node(FILE *fp, TJSON_t *json, int level)
-{
-	int comma;
-	comma = 0;
-
-	if (level < 1) level = 1; 
-	
-	fprintf(fp, "%c\n", '{');
-	while (json != NULL) {
-
-		if (comma) fprintf(fp, "%c\n", ',');
-
-		fprintf(fp, "%*s", level*4, "");		
-		fprintf(fp, "\"%s\": ", json->key);
-
-		if (json->value != NULL) fprintf(fp, "\"%s\"", json->value);
-		comma = 1;
-		
-		if (json->type == TANTO_JSON_OBJ) {
-			_tanto_write_node(fp, json->child, level+1);
-		}
-		
-		json = json->next;
-	}
-	fprintf(fp, "\n%*s%c", (level-1)*4, "", '}');
-	if (level == 1) fprintf(fp, "\n");
-}
-
 void tanto_write_file(char *file, TJSON_t *json)
 {
 	FILE *fp;
 	fp = fopen(file, "w");
 	if(fp == NULL) return;
 
-	_tanto_write_node(fp, json, 1);
+	_tanto_print(json->child, fp, json->type, 1);
 	
 	fclose(fp);
 }
