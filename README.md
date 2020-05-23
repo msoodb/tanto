@@ -1,20 +1,20 @@
-#json parser and creator library in C
+# json parser and creator library in C
 
 > tanto.h
 
-#Using tanto
+# Using tanto
 To use tanto you can include tanto.h header file.
 
 ```
 #include "tanto.h"
 ```
 
-#typedef in tanto.h
+# typedef in tanto.h
 ```
 TJSON_t
 ```
 
-#example usage
+# example usage
 ```
 TJSON_t *json = NULL;
 	
