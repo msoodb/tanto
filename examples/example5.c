@@ -15,13 +15,9 @@
 #include "../tanto.h"
 
 /* 
- * parenthes_balance 
+ * 
 */
 void main()
-{	
-	char *exp = "{()} [this is str for (2) test (tanto balane [1,2,3] (a{d}abc))tanto[]]"; 
-	if (tanto_balance_str(exp)) 
-		printf("Balanced \n"); 
-	else
-		printf("Not Balanced \n");
+{
+	
 }

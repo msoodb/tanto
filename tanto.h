@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdbool.h>
 
 #define _LIBRARY_NAME       "tanto"
 #define _LIBRARY_DESC       "json parser and creator library in C"
@@ -115,8 +114,8 @@ TJSON_t *tanto_find(TJSON_t *json, char *key)
 
 void tanto_print(TJSON_t *json)
 {
-	bool comma;
-	comma = false;
+	int comma;
+	comma = 0;
 	
 	printf("%c\n", '{');
 	while (json != NULL) {
@@ -124,7 +123,7 @@ void tanto_print(TJSON_t *json)
 		printf("\t");
 		printf("\"%s\":", json->key);
 		printf(" \"%s\"", json->value);
-		comma = true;
+		comma = 1;
 		json = json->next;
 	}
 	printf("\n%c\n", '}');		
@@ -251,8 +250,8 @@ void tanto_write_file(char *file, TJSON_t *json)
 	fp = fopen(file, "w");
 	if(fp == NULL) return;
 
-	bool comma;
-	comma = false;
+	int comma;
+	comma = 0;
 	
 	fprintf(fp, "%c\n", '{');
 	while (json != NULL) {
@@ -260,7 +259,7 @@ void tanto_write_file(char *file, TJSON_t *json)
 		fprintf(fp, "\t");
 		fprintf(fp, "\"%s\":", json->key);
 		fprintf(fp, " \"%s\"", json->value);
-		comma = true;
+		comma = 1;
 		json = json->next;
 	}
 	fprintf(fp, "\n%c\n", '}');
@@ -268,15 +267,15 @@ void tanto_write_file(char *file, TJSON_t *json)
 	fclose(fp);
 }
 
-bool is_match(char character1, char character2) 
+int tanto_match_char(char char1, char char2) 
 { 
-	if (character1 == '(' && character2 == ')') return 1; 
-	else if (character1 == '{' && character2 == '}') return 1; 
-	else if (character1 == '[' && character2 == ']') return 1; 
+	if (char1 == '(' && char2 == ')') return 1; 
+	else if (char1 == '{' && char2 == '}') return 1; 
+	else if (char1 == '[' && char2 == ']') return 1; 
 	return 0; 
 }
 
-bool parenthes_balanced(char *exp) 
+int tanto_balance_str(char *exp) 
 { 
 	int i = 0; 
  
@@ -287,7 +286,7 @@ bool parenthes_balanced(char *exp)
 			stack_push(&stack, exp[i]); 
   
 		if (exp[i] == '}' || exp[i] == ')' || exp[i] == ']'){ 
-			if (!is_match(stack_pop(&stack), exp[i])) return 0;
+			if (!tanto_match_char(stack_pop(&stack), exp[i])) return 0;
 		} 
 		i++; 
 	} 
