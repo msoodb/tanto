@@ -19,24 +19,30 @@
 */
 void main()
 {
-	TJSON_t *json = NULL;
-
-	TJSON_t *root = tanto_init_node(TANTO_JSON_OBJ, "root", NULL);
-	tanto_push(&json, root);
+	TJSON_t *root = NULL;
 
 	TJSON_t *node1 = tanto_init_node(TANTO_JSON_FIELD, "hello", "world!");
 	TJSON_t *node2 = tanto_init_node(TANTO_JSON_FIELD, "parser", "tanto");
 	TJSON_t *node3 = tanto_init_node(TANTO_JSON_OBJ, "library", NULL);
 	TJSON_t *node4 = tanto_init_node(TANTO_JSON_FIELD, "lex", "lexer");
-	tanto_child_push(&root, node1);
-	tanto_child_push(&root, node2);
-	tanto_child_push(&root, node3);
-	tanto_child_push(&root, node4);
+	tanto_push(&root, node1);
+	tanto_push(&root, node2);
+	tanto_push(&root, node3);
+	tanto_push(&root, node4);
 
 	TJSON_t *node31 = tanto_init_node(TANTO_JSON_FIELD ,"usage", "example.c");
-	tanto_child_push(&node3, node31);
+	TJSON_t *node32 = tanto_init_node(TANTO_JSON_FIELD ,"tests", "test.c");	
+	tanto_push(&node3->child, node31);	
+	tanto_push(&node3->child, node32);
 
-	tanto_print(json->child, 1);
+
+	TJSON_t *node5 = tanto_init_node(TANTO_JSON_FIELD, "color", "red");
+	tanto_push(&root, node5);
+
+	TJSON_t *node33 = tanto_init_node(TANTO_JSON_FIELD ,"main", "main.c");	
+	tanto_push(&node3->child, node33);
+	
+	//tanto_print(root);
 		
-	//tanto_write_file("hello_world.json", json);
+	tanto_write_file("hello_world.json", root);
 }
