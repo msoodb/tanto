@@ -25,3 +25,4 @@ tanto_push(&json, node2);
 
 tanto_write_file("hello_world.json", json);
 ```
+you can find all usage examples in examples folder.
