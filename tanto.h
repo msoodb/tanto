@@ -137,6 +137,7 @@ void _tanto_print(TJSON_t *json, FILE *fp, int type, int level)
 	comma = 0;
 
 	if (level < 1) level = 1;
+	
 	char start, end;
 	start = '{';
 	end = '}';
@@ -153,7 +154,8 @@ void _tanto_print(TJSON_t *json, FILE *fp, int type, int level)
 
 		fprintf(fp, "%*s", level*2, "");
 		
-		if (json->key != NULL) fprintf(fp, "\"%s\": ", json->key);
+		if (json->key != NULL) fprintf(fp, "\"%s\"", json->key);
+		if (type != TANTO_JSON_ARRAY) fprintf(fp, ": " );
 		if (json->value != NULL) fprintf(fp, "\"%s\"", json->value);
 		
 		comma = 1;
