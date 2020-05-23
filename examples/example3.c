@@ -30,34 +30,34 @@ void main()
 	tanto_push(&json, path);
 
 	
-	TJSON_t *node2 = tanto_create_node(TANTO_JSON_FIELD, "parser", "tanto");
-	TJSON_t *node3 = tanto_create_node(TANTO_JSON_OBJ, "library", NULL);
-	TJSON_t *node4 = tanto_create_node(TANTO_JSON_FIELD, "lex", "lexer");	
-	tanto_push(&json, node2);
-	tanto_push(&server, node3);
-	tanto_push(&server, node4);
+	TJSON_t *parser = tanto_create_node(TANTO_JSON_FIELD, "parser", "tanto");
+	TJSON_t *library = tanto_create_node(TANTO_JSON_OBJ, "library", NULL);
+	TJSON_t *lex = tanto_create_node(TANTO_JSON_FIELD, "lex", "lexer");	
+	tanto_push(&json, parser);
+	tanto_push(&server, library);
+	tanto_push(&server, lex);
 
-	TJSON_t *node31 = tanto_create_node(TANTO_JSON_FIELD ,"usage", "example.c");
-	TJSON_t *node32 = tanto_create_node(TANTO_JSON_FIELD ,"tests", "test.c");	
-	tanto_push(&node3, node31);	
-	tanto_push(&node3, node32);
+	TJSON_t *usage = tanto_create_node(TANTO_JSON_FIELD ,"usage", "example.c");
+	TJSON_t *tests = tanto_create_node(TANTO_JSON_FIELD ,"tests", "test.c");	
+	tanto_push(&library, usage);	
+	tanto_push(&library, tests);
 
 
-	TJSON_t *node5 = tanto_create_node(TANTO_JSON_FIELD, "color", "red");
-	tanto_push(&json, node5);
+	TJSON_t *color = tanto_create_node(TANTO_JSON_FIELD, "color", "red");
+	tanto_push(&json, color);
 
-	TJSON_t *node33 = tanto_create_node(TANTO_JSON_FIELD ,"main", "main.c");	
-	tanto_push(&json, node33);
+	TJSON_t *main = tanto_create_node(TANTO_JSON_FIELD ,"main", "main.c");	
+	tanto_push(&json, main);
 
 
 
 
 	TJSON_t *functions = tanto_create_node(TANTO_JSON_ARRAY, "functions", NULL);
 	tanto_push(&json, functions);
-	TJSON_t *function1 = tanto_create_node(TANTO_JSON_FIELD ,"pop", NULL);	
-	tanto_push(&functions, function1);
-	TJSON_t *function2 = tanto_create_node(TANTO_JSON_FIELD ,"push", NULL);	
-	tanto_push(&functions, function2);
+	TJSON_t *pop = tanto_create_node(TANTO_JSON_FIELD ,"pop", NULL);	
+	tanto_push(&functions, pop);
+	TJSON_t *push = tanto_create_node(TANTO_JSON_FIELD ,"push", NULL);	
+	tanto_push(&functions, push);
 	
 	
 	//tanto_print(json);
