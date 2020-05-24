@@ -122,11 +122,17 @@ TJSON_t *tanto_pop(TJSON_t **json)
 }
 
 TJSON_t *tanto_find(TJSON_t *json, char *key)
-{	
+{
+	if (json == NULL || json->child == NULL)
+		return NULL;
+
+	json = json->child;
+	
 	while (json != NULL) {
 		if (strcmp(json->key, key) == 0) return json;
 		json = json->next;
 	}
+
 	return NULL;
 }
 

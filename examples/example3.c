@@ -15,6 +15,30 @@
 #include "../tanto.h"
 
 /* 
+ * create this json object and print on stdout or file.
+ *
+ {
+   "functions": [
+     "push",
+     "pop"
+   ],
+   "main": "main.c",
+   "color": "red",
+   "parser": "tanto",
+   "path": "http://www.gnu.org/licenses/",
+   "server": {
+     "lex": "lexer",
+     "library": {
+       "tests": "test.c",
+       "usage": "example.c"
+     }
+   }
+ }
+*/
+
+
+
+/* 
  * create json, add field, and print 
 */
 void main()
@@ -48,8 +72,6 @@ void main()
 
 	TJSON_t *main = tanto_create_node(TANTO_JSON_FIELD ,"main", "main.c");	
 	tanto_push(&json, main);
-
-
 
 
 	TJSON_t *functions = tanto_create_node(TANTO_JSON_ARRAY, "functions", NULL);
