@@ -27,6 +27,7 @@
 #define _LIBRARY_URL        "https://msoodb.org/tanto"
 
 #define IS_EMPTY_LIST(lsit)  ((list) == NULL)
+#define TANTO_INIT(json)     tanto_init((json));
 
 #define TANTO_JSON_OBJ     0
 #define TANTO_JSON_ARRAY   1
@@ -247,12 +248,10 @@ TJSON_t *tanto_lex(char *chunk)
 
 	return node;
 }
-
-TJSON_t *tanto_parse(const char *stream)
+void tanto_parse(TJSON_t **json, const char *stream)
 {
 	char *chunk;
 	size_t step;
-	TJSON_t *json = NULL;
 	TJSON_t *node = NULL;
 	
 	chunk = NULL;
@@ -270,10 +269,10 @@ TJSON_t *tanto_parse(const char *stream)
 		stream += step + 1;
 				
 		node = tanto_lex(chunk);
-		tanto_push(&json, node);
+		tanto_push(json, node);
 	}
 
-	return json;
+	return;
 }
 
 char *tanto_read_file(const char *file)

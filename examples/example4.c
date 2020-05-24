@@ -22,12 +22,15 @@ void main()
 	char *stream;
 	stream = tanto_read_file("../json/package-min.json");
 
-	TJSON_t *json = NULL;	
-	json = tanto_parse(stream);
+	TJSON_t *json = NULL;
+	TANTO_INIT(&json);
 
-	TJSON_t *node = NULL;
-	node = tanto_find(json, "@vue/cli-service");
-	if (node != NULL) {
-		printf("%s\n", node->value);
-	}
+	tanto_parse(&json, stream);
+	tanto_print(json);
+
+	//TJSON_t *node = NULL;
+	//node = tanto_find(json, "@vue/cli-service");
+	//if (node != NULL) {
+	//	printf("%s\n", node->value);
+	//}
 }

@@ -39,7 +39,7 @@
 void main()
 {
 	TJSON_t *c = NULL;
-	tanto_init(&c);
+	TANTO_INIT(&c);
 
 	TJSON_t *functions = tanto_create_node(TANTO_JSON_ARRAY, "functions", NULL);
 	tanto_push(&c, functions);

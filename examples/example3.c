@@ -44,7 +44,7 @@
 void main()
 {
 	TJSON_t *json = NULL;
-	tanto_init(&json);
+	TANTO_INIT(&json);
 
 
 	TJSON_t *server = tanto_create_node(TANTO_JSON_OBJ, "server", NULL);
