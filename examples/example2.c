@@ -20,11 +20,14 @@
 void main()
 {
 	char *stream;
-	stream = tanto_read_file("../json/package-min.json");
+	//stream = tanto_read_file("../json/hello_world.json");
+	stream = tanto_read_file("../json/c.json");
+	//stream = tanto_read_file("../json/package.json");
 
+	
 	TJSON_t *json = NULL;
 	TANTO_INIT(&json);
 
 	tanto_parse(&json, stream);	
-	tanto_print(json);
+	//tanto_print(json);
 }

@@ -29,15 +29,10 @@
 #define IS_EMPTY_LIST(lsit)  ((list) == NULL)
 #define TANTO_INIT(json)     tanto_init((json));
 
-#define TANTO_JSON_OBJ     0
-#define TANTO_JSON_ARRAY   1
-#define TANTO_JSON_FIELD   2
-
-typedef struct __stack_node
-{
-	char data;	
-	struct __stack_node *next;
-} S_NODE_t;
+#define TANTO_JSON_OBJECT          0
+#define TANTO_JSON_ARRAY           1
+#define TANTO_JSON_OBJECT_FIELD    5
+#define TANTO_JSON_ARRAY_FIELD     6
 
 typedef struct __json
 {
@@ -49,20 +44,28 @@ typedef struct __json
 	int type;
 } TJSON_t;
 
-void stack_push(S_NODE_t **stack, char data)
-{
-	S_NODE_t *new = (S_NODE_t *)malloc(sizeof(S_NODE_t));
-	if (new == NULL) return;
-	
-	new->data = data;
-	new->next = (*stack);
 
-	(*stack) = new;
+typedef struct __stack_node
+{
+	TJSON_t *data;	
+	struct __stack_node *next;
+} S_NODE_t;
+
+
+void stack_push(S_NODE_t **stack, TJSON_t *data)
+{ 
+	S_NODE_t *node = (S_NODE_t *)malloc(sizeof(S_NODE_t));
+	if (node == NULL) return;
+	
+	node->data = data;
+	node->next = (*stack);
+
+	(*stack) = node;
 }
 
-char stack_pop(S_NODE_t **stack)
+TJSON_t *stack_pop(S_NODE_t **stack)
 {
-	char data;
+	TJSON_t *data;
 	S_NODE_t *top;
 	if (*stack == NULL) return 0;
 
@@ -99,7 +102,7 @@ void tanto_init(TJSON_t **json)
 
 	node->key = NULL;
 	node->value = NULL;
-	node->type = TANTO_JSON_OBJ;
+	node->type = TANTO_JSON_OBJECT;
 	
 	*json = node;
 }
@@ -167,7 +170,7 @@ void _tanto_print(TJSON_t *json, FILE *fp, int type, int level)
 		
 		comma = 1;
 		
-		if ((json->type == TANTO_JSON_OBJ) ||
+		if ((json->type == TANTO_JSON_OBJECT) ||
 		    (json->type == TANTO_JSON_ARRAY)) {
 			_tanto_print(json->child, fp, json->type, level+1);
 		}
@@ -230,7 +233,7 @@ TJSON_t *tanto_lex(char *chunk)
 	/*
 	 * type
 	 */
-	type = TANTO_JSON_FIELD;
+	type = TANTO_JSON_OBJECT_FIELD;
 		
 	/* 
 	 * value 
@@ -248,7 +251,91 @@ TJSON_t *tanto_lex(char *chunk)
 
 	return node;
 }
+
+
+
+/*
+  {
+  "key": "value",
+  "key": "value" }
+  "key" ]
+  "key": {
+  "key": [
+  "key",
+ */
 void tanto_parse(TJSON_t **json, const char *stream)
+{
+	//printf("%s\n", stream);
+	S_NODE_t *stack;
+	char *chunk; 
+	size_t step;
+	char c;
+	
+	stack = NULL;
+	chunk = NULL;
+	step = 0;
+	
+
+	step = strcspn(stream, "{");
+	stream += (step + 1);
+	stack_push(&stack, *json);
+
+		
+	int i = 0;
+	while (*stream != '\0') {	
+		step = strcspn(stream, ",{[}]");
+
+		switch ((c =*(stream + step))) {
+		case ',': {
+			printf("%s\n", "comma");
+			break;
+		}
+		case '{': {
+			printf("%s\n", "open bracket");
+			break;
+		}
+		case '[': {
+			printf("%s\n", "open square bracket");
+			break;
+		}
+		case ']': {
+			printf("%s\n", "close square bracket");
+			break;
+		}
+		case '}': {
+			chunk = malloc(sizeof(char) * (step + 2));
+			memcpy(chunk, stream, step + 1);
+			chunk[step + 1] = '\0';
+			printf("%s\n", chunk);
+
+			
+			//stack_pop(&stack)
+			printf("%s\n", "close bracket");
+			break;
+		}
+
+		default:
+			break;
+		}
+		/*if (*(stream+step) == ',') {
+			chunk = malloc(sizeof(char) * (step + 2));
+			memcpy(chunk, stream, step + 1);
+			chunk[step + 1] = '\0';
+			printf("%s", chunk);
+			}*/
+		
+				
+		//node = tanto_lex(chunk);
+		//tanto_push(json, node);
+		
+		//printf("%c", *stream);
+		stream += (step+1);
+	}
+
+	return;
+}
+
+/*void tanto_parse(TJSON_t **json, const char *stream)
 {
 	char *chunk;
 	size_t step;
@@ -273,7 +360,7 @@ void tanto_parse(TJSON_t **json, const char *stream)
 	}
 
 	return;
-}
+	}*/
 
 char *tanto_read_file(const char *file)
 {
@@ -311,15 +398,15 @@ void tanto_write_file(char *file, TJSON_t *json)
 }
 
 
-int tanto_match_char(char char1, char char2) 
+/*int tanto_match_char(char char1, char char2) 
 { 
 	if (char1 == '(' && char2 == ')') return 1; 
 	else if (char1 == '{' && char2 == '}') return 1; 
 	else if (char1 == '[' && char2 == ']') return 1; 
 	return 0; 
-}
+	}*/
 
-int tanto_balance_str(char *exp) 
+/*int tanto_balance_str(char *exp) 
 { 
 	int i = 0; 
  
@@ -338,6 +425,6 @@ int tanto_balance_str(char *exp)
 	if (stack == NULL) return 1;
    
 	return 0;
-}
+	}*/
 
 #endif  //__TANTO_H
