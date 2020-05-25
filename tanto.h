@@ -203,19 +203,18 @@ void tanto_print_addr(TJSON_t *json)
 }
 
 TJSON_t *tanto_lex(char *chunk)
-{
+{       
 	TJSON_t *node;
 	size_t step;
 
 	char *key;
 	char *value;
 	int type;
+	char c;
 	
 	node = NULL;
 	
-	/* 
-	 * key 
-	 */
+	/* key */
 	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
 	if (strlen(chunk) <= 1) return NULL;
 	
@@ -228,28 +227,108 @@ TJSON_t *tanto_lex(char *chunk)
 	memcpy(key, chunk, step);
 	key[step] = '\0';
 	chunk += step + 1;
+			
 
-	/*
-	 * type
-	 */
-	type = TANTO_JSON_OBJECT_FIELD;
-		
-	/* 
-	 * value 
-	 */
+	/* type */
 	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"')
 		chunk++;
 		
-	step = strcspn(chunk, "\",\0");
+	step = strcspn(chunk, "\",{[\0");
+	switch ((c =*(chunk + step))) {
+	case ',': {
+		type = TANTO_JSON_ARRAY_FIELD;
+		break;
+	}
+	case '[': {
+		type = TANTO_JSON_ARRAY;
+		break;
+	}
+	case '{': {
+		type = TANTO_JSON_OBJECT;
+		break;
+	}
+	default:
+		break;
+	}
+
+
+	/* value */
 	value = malloc(sizeof(char) * (step + 1));
 	if (value == NULL) return NULL;
 	
 	memcpy(value, chunk, step);
 	value[step] = '\0';
 
+
+	/*
+	 * type
+	 */
+	type = TANTO_JSON_OBJECT_FIELD;
+
+
 	node = tanto_create_node(type, key, value);
 
 	return node;
+}
+
+TJSON_t *tanto_lex_field(char *chunk)
+{       
+	TJSON_t *node;
+	size_t step;
+
+	char *key;
+	char *value;
+	int type;
+	char c;
+	
+	node = NULL;
+	
+	/* key */
+	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
+	if (strlen(chunk) <= 1) return NULL;
+	
+
+	step = strcspn(chunk, "\"\0");
+
+	key = malloc(sizeof(char) * (step + 1));	
+	if (key == NULL) return NULL;
+	
+	memcpy(key, chunk, step);
+	key[step] = '\0';
+	chunk += step + 1;
+			
+
+	/* type */
+	while(isspace((unsigned char)*chunk))
+		chunk++;
+	if (*chunk == ',') {
+		type = TANTO_JSON_ARRAY_FIELD;
+		value = NULL;
+		goto success;
+	}
+
+	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"')
+		chunk++;		
+
+	/* value */
+	step = strcspn(chunk, "\"");
+	value = malloc(sizeof(char) * (step + 1));
+	if (value == NULL) return NULL;
+	
+	memcpy(value, chunk, step);
+	value[step] = '\0';
+
+	/* type */
+	type = TANTO_JSON_OBJECT_FIELD;
+
+success:
+	node = tanto_create_node(type, key, value);
+	return node;
+
+failure:
+	node = NULL;
+	return node;
+
 }
 
 void tanto_parse(TJSON_t **json, const char *stream)
@@ -271,56 +350,45 @@ void tanto_parse(TJSON_t **json, const char *stream)
 	step = strcspn(stream, "{");
 	stream += (step + 1);
 	current = *json;
-	//stack_push(&stack, current);
-
 		
 	int i = 0;
 	while (*stream != '\0') {	
 		step = strcspn(stream, ",{[}]");
+		
+		chunk = malloc(sizeof(char) * (step + 2));
+		memcpy(chunk, stream, step + 1);
+		chunk[step + 1] = '\0';
+
 
 		switch ((c =*(stream + step))) {
 		case ',': {			
-			chunk = malloc(sizeof(char) * (step + 2));
-			memcpy(chunk, stream, step + 1);
-			chunk[step + 1] = '\0';
-
-			new = tanto_lex(chunk);
-			if (new != NULL) tanto_push(&current, new);
-			
+			new = tanto_lex_field(chunk);
+			if (new != NULL) tanto_push(&current, new);			
 			break;
 		}
 		case '{': {
-			chunk = malloc(sizeof(char) * (step + 2));
-			memcpy(chunk, stream, step + 1);
-			chunk[step + 1] = '\0';
-
-			//new = tanto_lex(chunk);
 			new = tanto_create_node(TANTO_JSON_OBJECT, "obj", NULL);
-			//new->type = TANTO_JSON_OBJECT;
 			tanto_push(&current, new);
-
-			
 			stack_push(&stack, current);
 			current = new;
-			
 			break;
 		}
 		case '[': {
-			printf("%s\n", "open square bracket");
+			new = tanto_create_node(TANTO_JSON_ARRAY, "arr", NULL);
+			tanto_push(&current, new);
+			stack_push(&stack, current);
+			current = new;
 			break;
 		}
 		case ']': {
-			printf("%s\n", "close square bracket");
+			new = tanto_lex(chunk);
+			if (new != NULL) tanto_push(&current, new);
+			current = stack_pop(&stack);
 			break;
 		}
 		case '}': {			
-			chunk = malloc(sizeof(char) * (step + 2));
-			memcpy(chunk, stream, step + 1);
-			chunk[step + 1] = '\0';
-
 			new = tanto_lex(chunk);
 			if (new != NULL) tanto_push(&current, new);
-			
 			current = stack_pop(&stack);
 			break;
 		}

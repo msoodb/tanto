@@ -20,8 +20,8 @@
 void main()
 {
 	char *stream;
-	//stream = tanto_read_file("../json/hello_world.json");
-	stream = tanto_read_file("../json/simple.json");
+	stream = tanto_read_file("../json/hello_world.json");
+	//stream = tanto_read_file("../json/simple.json");
 	//stream = tanto_read_file("../json/c.json");
 	//stream = tanto_read_file("../json/package.json");
 
