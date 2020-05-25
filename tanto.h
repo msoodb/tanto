@@ -119,7 +119,6 @@ TJSON_t *tanto_pop(TJSON_t **json)
 	if (*json == NULL) return NULL;
 	
 	TJSON_t *current = *json;
-
 	*json = (*json)->next;
 	
 	return current;
@@ -252,8 +251,6 @@ TJSON_t *tanto_lex(char *chunk)
 	return node;
 }
 
-
-
 /*
   {
   "key": "value",
@@ -268,6 +265,8 @@ void tanto_parse(TJSON_t **json, const char *stream)
 	if (stream == NULL) return;
 
 	S_NODE_t *stack;
+	TJSON_t *current;
+	TJSON_t *new;
 	char *chunk; 
 	size_t step;
 	char c;
@@ -279,7 +278,8 @@ void tanto_parse(TJSON_t **json, const char *stream)
 
 	step = strcspn(stream, "{");
 	stream += (step + 1);
-	stack_push(&stack, *json);
+	current = *json;
+	stack_push(&stack, current);
 
 		
 	int i = 0;
@@ -288,7 +288,14 @@ void tanto_parse(TJSON_t **json, const char *stream)
 
 		switch ((c =*(stream + step))) {
 		case ',': {
-			printf("%s\n", "comma");
+			/* chunk contain delimiter and \0 */
+			chunk = malloc(sizeof(char) * (step + 2));
+			memcpy(chunk, stream, step + 1);
+			chunk[step + 1] = '\0';
+
+			new = tanto_lex(chunk);
+			tanto_push(&current, new);
+			
 			break;
 		}
 		case '{': {
@@ -304,34 +311,22 @@ void tanto_parse(TJSON_t **json, const char *stream)
 			break;
 		}
 		case '}': {
+			/* chunk contain delimiter and \0 */
 			chunk = malloc(sizeof(char) * (step + 2));
 			memcpy(chunk, stream, step + 1);
 			chunk[step + 1] = '\0';
-			printf("%s\n", chunk);
 
+			new = tanto_lex(chunk);
+			tanto_push(&current, new);
 			
-			//stack_pop(&stack)
-			printf("%s\n", "close bracket");
+			stack_pop(&stack);
 			break;
 		}
-
 		default:
 			break;
 		}
-		/*if (*(stream+step) == ',') {
-			chunk = malloc(sizeof(char) * (step + 2));
-			memcpy(chunk, stream, step + 1);
-			chunk[step + 1] = '\0';
-			printf("%s", chunk);
-			}*/
-		
-				
-		//node = tanto_lex(chunk);
-		//tanto_push(json, node);
-		
-		//printf("%c", *stream);
 		stream += (step+1);
-	}
+ 	}
 
 	return;
 }
