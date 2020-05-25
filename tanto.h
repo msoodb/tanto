@@ -265,7 +265,8 @@ TJSON_t *tanto_lex(char *chunk)
  */
 void tanto_parse(TJSON_t **json, const char *stream)
 {
-	//printf("%s\n", stream);
+	if (stream == NULL) return;
+
 	S_NODE_t *stack;
 	char *chunk; 
 	size_t step;
