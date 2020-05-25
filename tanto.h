@@ -237,7 +237,8 @@ TJSON_t *tanto_lex(char *chunk)
 	/* 
 	 * value 
 	 */
-	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"') chunk++;
+	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"')
+		chunk++;
 		
 	step = strcspn(chunk, "\",\0");
 	value = malloc(sizeof(char) * (step + 1));
@@ -251,15 +252,6 @@ TJSON_t *tanto_lex(char *chunk)
 	return node;
 }
 
-/*
-  {
-  "key": "value",
-  "key": "value" }
-  "key" ]
-  "key": {
-  "key": [
-  "key",
- */
 void tanto_parse(TJSON_t **json, const char *stream)
 {
 	if (stream == NULL) return;
@@ -287,8 +279,7 @@ void tanto_parse(TJSON_t **json, const char *stream)
 		step = strcspn(stream, ",{[}]");
 
 		switch ((c =*(stream + step))) {
-		case ',': {
-			/* chunk contain delimiter and \0 */
+		case ',': {			
 			chunk = malloc(sizeof(char) * (step + 2));
 			memcpy(chunk, stream, step + 1);
 			chunk[step + 1] = '\0';
@@ -310,8 +301,7 @@ void tanto_parse(TJSON_t **json, const char *stream)
 			printf("%s\n", "close square bracket");
 			break;
 		}
-		case '}': {
-			/* chunk contain delimiter and \0 */
+		case '}': {			
 			chunk = malloc(sizeof(char) * (step + 2));
 			memcpy(chunk, stream, step + 1);
 			chunk[step + 1] = '\0';
@@ -330,33 +320,6 @@ void tanto_parse(TJSON_t **json, const char *stream)
 
 	return;
 }
-
-/*void tanto_parse(TJSON_t **json, const char *stream)
-{
-	char *chunk;
-	size_t step;
-	TJSON_t *node = NULL;
-	
-	chunk = NULL;
-	step = 0;
-	
-
-	int i = 0;
-	while (strlen(stream) > 0) {
-	
-		step = strcspn(stream, ",");
-		chunk = malloc(sizeof(char) * (step + 1));
-		memcpy(chunk, stream, step);
-		chunk[step] = '\0';
-		
-		stream += step + 1;
-				
-		node = tanto_lex(chunk);
-		tanto_push(json, node);
-	}
-
-	return;
-	}*/
 
 char *tanto_read_file(const char *file)
 {
@@ -392,35 +355,5 @@ void tanto_write_file(char *file, TJSON_t *json)
 	
 	fclose(fp);
 }
-
-
-/*int tanto_match_char(char char1, char char2) 
-{ 
-	if (char1 == '(' && char2 == ')') return 1; 
-	else if (char1 == '{' && char2 == '}') return 1; 
-	else if (char1 == '[' && char2 == ']') return 1; 
-	return 0; 
-	}*/
-
-/*int tanto_balance_str(char *exp) 
-{ 
-	int i = 0; 
- 
-	S_NODE_t *stack = NULL; 
-  
-	while (exp[i]){ 
-		if (exp[i] == '{' || exp[i] == '(' || exp[i] == '[') 
-			stack_push(&stack, exp[i]); 
-  
-		if (exp[i] == '}' || exp[i] == ')' || exp[i] == ']'){ 
-			if (!tanto_match_char(stack_pop(&stack), exp[i])) return 0;
-		} 
-		i++; 
-	} 
-     
-	if (stack == NULL) return 1;
-   
-	return 0;
-	}*/
 
 #endif  //__TANTO_H
