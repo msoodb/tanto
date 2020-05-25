@@ -1,4 +1,5 @@
 # json parser and creator library in C
+## under development, not ready to use!
 
 > tanto.h
 
