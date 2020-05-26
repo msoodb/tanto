@@ -30,27 +30,19 @@ you can find all usage examples in examples folder.
 
 # Build examples
 
-##in folder examples
+## in folder examples
 
 
 > example1.c
 
-compile 
 ```
-cc -o example1 example1.c
-```
-run
-```
-./example1
+$ cc -o example1 example1.c
+$ ./example1
 ````
 
 > example2.c
 
-compile 
 ```
-cc -o example2 example2.c
-```
-run
-```
-./example2
+$ cc -o example2 example2.c
+$ ./example2
 ````
