@@ -36,13 +36,13 @@ you can find all usage examples in examples folder.
 > example1.c
 
 ```
-$ cc -o example1 example1.c
+$ cc -o example1 example1.c -Wall -Wextra -pedantic
 $ ./example1
 ````
 
 > example2.c
 
 ```
-$ cc -o example2 example2.c
+$ cc -o example2 example2.c -Wall -Wextra -pedantic
 $ ./example2
 ````
