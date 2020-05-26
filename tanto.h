@@ -26,13 +26,15 @@
 #define _LIBRARY_VERSION    "0.0.1"
 #define _LIBRARY_URL        "https://msoodb.org/tanto"
 
-#define IS_EMPTY_LIST(lsit)  ((list) == NULL)
+#define IS_EMPTY_LIST(list)  ((list) == NULL)
 #define TANTO_INIT(json)     tanto_init((json));
 
 #define TANTO_JSON_OBJECT          0
 #define TANTO_JSON_ARRAY           1
 #define TANTO_JSON_OBJECT_FIELD    5
 #define TANTO_JSON_ARRAY_FIELD     6
+
+
 
 typedef struct __json
 {
@@ -202,7 +204,12 @@ void tanto_print_addr(TJSON_t *json)
 	}	
 }
 
-TJSON_t *tanto_lex(char *chunk)
+
+/*
+ * {
+ * "----": {
+ */
+TJSON_t *tanto_lex_object(char *chunk)
 {       
 	TJSON_t *node;
 	size_t step;
@@ -210,72 +217,86 @@ TJSON_t *tanto_lex(char *chunk)
 	char *key;
 	char *value;
 	int type;
-	char c;
 	
 	node = NULL;
-	
-	/* key */
+
 	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
-	if (strlen(chunk) <= 1) return NULL;
-	
+	if (strlen(chunk) <= 1) goto failure;
 
-	step = strcspn(chunk, "\"\0");
 
+	// key
+	step = strcspn(chunk, "\"");
 	key = malloc(sizeof(char) * (step + 1));	
-	if (key == NULL) return NULL;
-	
+	if (key == NULL) goto failure;	
 	memcpy(key, chunk, step);
 	key[step] = '\0';
 	chunk += step + 1;
 			
 
-	/* type */
-	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"')
-		chunk++;
-		
-	step = strcspn(chunk, "\",{[\0");
-	switch ((c =*(chunk + step))) {
-	case ',': {
-		type = TANTO_JSON_ARRAY_FIELD;
-		break;
-	}
-	case '[': {
-		type = TANTO_JSON_ARRAY;
-		break;
-	}
-	case '{': {
-		type = TANTO_JSON_OBJECT;
-		break;
-	}
-	default:
-		break;
-	}
+	// type
+	type = TANTO_JSON_OBJECT;
 
+	// value
+	value = NULL;
 
-	/* value */
-	value = malloc(sizeof(char) * (step + 1));
-	if (value == NULL) return NULL;
+	goto success;
+
+failure:
+	node = NULL;
+	return node;
 	
-	memcpy(value, chunk, step);
-	value[step] = '\0';
-
-
-	/*
-	 * type
-	 */
-	type = TANTO_JSON_OBJECT_FIELD;
-
-
+success:
 	node = tanto_create_node(type, key, value);
-
 	return node;
 }
 
-/*TJSON_t *tanto_lex_array(char *chunk) 
+TJSON_t *tanto_lex_array(char *chunk) 
 { 
-    return NULL;
-    }*/
+ 	TJSON_t *node;
+	size_t step;
 
+	char *key;
+	char *value;
+	int type;
+	
+	node = NULL;
+
+	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
+	if (strlen(chunk) <= 1) goto failure;
+
+
+	// key
+	step = strcspn(chunk, "\"");
+	key = malloc(sizeof(char) * (step + 1));	
+	if (key == NULL) goto failure;	
+	memcpy(key, chunk, step);
+	key[step] = '\0';
+	chunk += step + 1;
+			
+
+	// type
+	type = TANTO_JSON_ARRAY;
+
+	// value
+	value = NULL;
+
+	goto success;
+
+failure:
+	node = NULL;
+	return node;
+	
+success:
+	node = tanto_create_node(type, key, value);
+	return node;
+}
+  
+/*
+ * "------": "-------",
+ * "------": "-------"}
+ * "------",
+ * "------"]
+ */
 TJSON_t *tanto_lex_field(char *chunk)
 {       
 	TJSON_t *node;
@@ -287,43 +308,37 @@ TJSON_t *tanto_lex_field(char *chunk)
 	
 	node = NULL;
 	
-	/* key */
-	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
+	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++; 
 	if (strlen(chunk) <= 1) goto failure;
-	
 
-	step = strcspn(chunk, "\"\0");
-
+	// key
+	step = strcspn(chunk, "\"");
 	key = malloc(sizeof(char) * (step + 1));	
-	if (key == NULL) goto failure;
-	
+	if (key == NULL) goto failure;	
 	memcpy(key, chunk, step);
 	key[step] = '\0';
 	chunk += step + 1;
 			
 
-	/* type */
-	while(isspace((unsigned char)*chunk))
-		chunk++;
-	if (*chunk == ',') {
+	// type 
+	while(isspace((unsigned char)*chunk)) chunk++;
+	if (*chunk == ',' || *chunk == ']') {
 		type = TANTO_JSON_ARRAY_FIELD;
 		value = NULL;
 		goto success;
 	}
 
-	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"')
-		chunk++;		
+	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"') chunk++;
 
-	/* value */
+	// value
 	step = strcspn(chunk, "\"");
 	value = malloc(sizeof(char) * (step + 1));
 	if (value == NULL) goto failure;
 	
 	memcpy(value, chunk, step);
 	value[step] = '\0';
-
-	/* type */
 	type = TANTO_JSON_OBJECT_FIELD;
+	
 
 success:
 	node = tanto_create_node(type, key, value);
@@ -332,7 +347,6 @@ success:
 failure:
 	node = NULL;
 	return node;
-
 }
 
 void tanto_parse(TJSON_t **json, const char *stream)
@@ -344,7 +358,7 @@ void tanto_parse(TJSON_t **json, const char *stream)
 	TJSON_t *new;
 	char *chunk; 
 	size_t step;
-	char c;
+	char delimiter;
 	
 	stack = NULL;
 	chunk = NULL;
@@ -354,43 +368,48 @@ void tanto_parse(TJSON_t **json, const char *stream)
 	step = strcspn(stream, "{");
 	stream += (step + 1);
 	current = *json;
-		
+
+	// iterate over stream
 	while (*stream != '\0') {	
-		step = strcspn(stream, ",{[}]");
-		
+		step = strcspn(stream, ",{[]}");
+
+		// get chunk plus delimiters
 		chunk = malloc(sizeof(char) * (step + 2));
 		memcpy(chunk, stream, step + 1);
 		chunk[step + 1] = '\0';
 
+		// delimiter
+		delimiter = *(stream + step);
 
-		switch ((c =*(stream + step))) {
+		
+		switch (delimiter) {
 		case ',': {			
 			new = tanto_lex_field(chunk);
-			if (new != NULL) tanto_push(&current, new);			
+			if (new != NULL) tanto_push(&current, new);
 			break;
 		}
 		case '{': {
-			new = tanto_create_node(TANTO_JSON_OBJECT, "obj", NULL);
+			new = tanto_lex_object(chunk);
 			tanto_push(&current, new);
 			stack_push(&stack, current);
 			current = new;
 			break;
 		}
 		case '[': {
-			new = tanto_create_node(TANTO_JSON_ARRAY, "arr", NULL);
+			new = tanto_lex_array(chunk);
 			tanto_push(&current, new);
 			stack_push(&stack, current);
 			current = new;
 			break;
 		}
 		case ']': {
-			new = tanto_lex(chunk);
+			new = tanto_lex_field(chunk);			
 			if (new != NULL) tanto_push(&current, new);
 			current = stack_pop(&stack);
 			break;
 		}
-		case '}': {			
-			new = tanto_lex(chunk);
+		case '}': {
+			new = tanto_lex_field(chunk);
 			if (new != NULL) tanto_push(&current, new);
 			current = stack_pop(&stack);
 			break;
