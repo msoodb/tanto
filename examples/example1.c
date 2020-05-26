@@ -15,13 +15,16 @@
 #include "../tanto.h"
 
 /* 
- * parenthes_balance 
+ * read jsno file, parse and print 
 */
 void main()
-{	
-	char *exp = "{()} [this is str for (2) test (tanto balane [1,2,3] (a{d}abc))tanto[]]"; 
-	if (tanto_balance_str(exp)) 
-		printf("Balanced \n"); 
-	else
-		printf("Not Balanced \n");
+{
+	char *stream;
+	stream = tanto_read_file("json/simple.json");
+	
+	TJSON_t *json = NULL;
+	TANTO_INIT(&json);
+
+	tanto_parse(&json, stream);	
+	tanto_print(json);
 }

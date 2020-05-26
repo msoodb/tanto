@@ -1,0 +1,14 @@
+{
+    "hello": "world!",
+    "parser": "tanto",
+    "name": "Awesome 4K",
+    "versions": {
+	"version": "0.0.1",
+	"date": "2020"
+    },
+    "private": "true",
+    "functions": [
+	"push", "pop"
+    ],
+    "root": "mine"    
+}

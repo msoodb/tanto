@@ -271,6 +271,14 @@ TJSON_t *tanto_lex(char *chunk)
 	return node;
 }
 
+TJSON_t *tanto_lex_array(char *chunk) 
+{ 
+	/* to do 
+	* parse json array 
+	*/
+    return NULL;
+}
+
 TJSON_t *tanto_lex_field(char *chunk)
 {       
 	TJSON_t *node;
@@ -434,14 +442,6 @@ void tanto_write_file(char *file, TJSON_t *json)
 	_tanto_print(json->child, fp, json->type, 1);
 	
 	fclose(fp);
-}
-
-TJSON_t *tanto_lex_array(char *chunk) 
-{ 
-	/* to do 
-	* parse json array 
-	*/
-    return NULL;
 }
 
 #endif  //__TANTO_H
