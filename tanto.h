@@ -191,10 +191,10 @@ void tanto_print_addr(TJSON_t *json)
 	while (json != NULL) {
 
 		printf("\t%s\n", "  --------------------");
-		printf("%8d", json);
+		printf("%8p", (void *)json);
 		printf("%s", " | ");
-		printf("%8d %s", json->next, "|");
-		printf("%8d %s\n", json->child, "|");
+		printf("%8p %s", (void *)json->next, "|");
+		printf("%8p %s\n", (void *)json->child, "|");
 		printf("\t%s\n\n", "  --------------------");
 		tanto_print_addr(json->child);
 
@@ -271,13 +271,10 @@ TJSON_t *tanto_lex(char *chunk)
 	return node;
 }
 
-TJSON_t *tanto_lex_array(char *chunk) 
+/*TJSON_t *tanto_lex_array(char *chunk) 
 { 
-	/* to do 
-	* parse json array 
-	*/
     return NULL;
-}
+    }*/
 
 TJSON_t *tanto_lex_field(char *chunk)
 {       
@@ -287,7 +284,6 @@ TJSON_t *tanto_lex_field(char *chunk)
 	char *key;
 	char *value;
 	int type;
-	char c;
 	
 	node = NULL;
 	
@@ -359,7 +355,6 @@ void tanto_parse(TJSON_t **json, const char *stream)
 	stream += (step + 1);
 	current = *json;
 		
-	int i = 0;
 	while (*stream != '\0') {	
 		step = strcspn(stream, ",{[}]");
 		

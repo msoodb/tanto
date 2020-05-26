@@ -17,7 +17,7 @@
 /* 
  * read jsno file, parse and print 
 */
-void main()
+int main()
 {
 	char *stream;
 	stream = tanto_read_file("json/simple.json");
@@ -27,4 +27,6 @@ void main()
 
 	tanto_parse(&json, stream);	
 	tanto_print(json);
+
+	return 0;
 }

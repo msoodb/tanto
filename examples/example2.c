@@ -41,7 +41,7 @@
 /* 
  * create json, add field, and print 
 */
-void main()
+int main()
 {
 	TJSON_t *json = NULL;
 	TANTO_INIT(&json);
@@ -85,4 +85,6 @@ void main()
 	//tanto_print(json);
 		
 	tanto_write_file("json/example3-output.json", json);
+
+	return 0;
 }
