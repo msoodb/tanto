@@ -436,4 +436,12 @@ void tanto_write_file(char *file, TJSON_t *json)
 	fclose(fp);
 }
 
+TJSON_t *tanto_lex_array(char *chunk) 
+{ 
+	/* to do 
+	* parse json array 
+	*/
+    return NULL;
+}
+
 #endif  //__TANTO_H
