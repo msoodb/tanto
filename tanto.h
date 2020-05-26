@@ -285,13 +285,13 @@ TJSON_t *tanto_lex_field(char *chunk)
 	
 	/* key */
 	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
-	if (strlen(chunk) <= 1) return NULL;
+	if (strlen(chunk) <= 1) goto failure;
 	
 
 	step = strcspn(chunk, "\"\0");
 
 	key = malloc(sizeof(char) * (step + 1));	
-	if (key == NULL) return NULL;
+	if (key == NULL) goto failure;
 	
 	memcpy(key, chunk, step);
 	key[step] = '\0';
@@ -313,7 +313,7 @@ TJSON_t *tanto_lex_field(char *chunk)
 	/* value */
 	step = strcspn(chunk, "\"");
 	value = malloc(sizeof(char) * (step + 1));
-	if (value == NULL) return NULL;
+	if (value == NULL) goto failure;
 	
 	memcpy(value, chunk, step);
 	value[step] = '\0';
