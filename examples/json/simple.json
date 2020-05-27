@@ -1,14 +1,24 @@
 {
-    "hello": "world!",
-    "parser": "tanto",
-    "name": "Awesome 4K",
-    "versions": {
-	"version": "0.0.1",
-	"date": "2020"
-    },
-    "private": "true",
-    "functions": [
-	"push", "pop"
+    "node1": "world!",
+    "node2": [
+	{
+	    "node211": "tanto",
+	    "node212": "cli",
+	    "node213": "kci"
+	},
+	{
+	    "node221": "masoud"
+	}
     ],
-    "root": "mine"    
+    "node3": "Awesome 4K",
+    "node4": {
+	"node41": "true",
+	"node42": {
+	    "node421": "day",
+	    "node422": "night"
+	},
+	"node43": "false",
+	"node44": "false"
+    },
+    "node5": "mine"
 }

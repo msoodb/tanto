@@ -20,7 +20,7 @@
 int main()
 {
 	char *stream;
-	stream = tanto_read_file("json/simple.json");
+	stream = tanto_read_file("../json/simple.json");
 
 	TJSON_t *json = NULL;
 	TANTO_INIT(&json);

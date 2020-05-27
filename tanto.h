@@ -165,8 +165,10 @@ void _tanto_print(TJSON_t *json, FILE *fp, int type, int level)
 
 		fprintf(fp, "%*s", level*2, "");
 		
-		if (json->key != NULL) fprintf(fp, "\"%s\"", json->key);
-		if (type != TANTO_JSON_ARRAY) fprintf(fp, ": " );
+		if (json->key != NULL) {
+			fprintf(fp, "\"%s\"", json->key);
+			if (type != TANTO_JSON_ARRAY) fprintf(fp, ": " );
+		}
 		if (json->value != NULL) fprintf(fp, "\"%s\"", json->value);
 		
 		comma = 1;
@@ -220,8 +222,16 @@ TJSON_t *tanto_lex_object(char *chunk)
 	
 	node = NULL;
 
-	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
-	if (strlen(chunk) <= 1) goto failure;
+	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;	
+	if (strlen(chunk) < 1) goto failure;
+
+	char delimiter = *chunk;
+	if (delimiter == '{') {
+		key = NULL;
+		type = TANTO_JSON_OBJECT;
+		value = NULL;
+		goto success;
+	}
 
 
 	// key
@@ -352,7 +362,7 @@ failure:
 void tanto_parse(TJSON_t **json, const char *stream)
 {
 	if (stream == NULL) return;
-
+	
 	S_NODE_t *stack;
 	TJSON_t *current;
 	TJSON_t *new;
@@ -388,7 +398,7 @@ void tanto_parse(TJSON_t **json, const char *stream)
 			if (new != NULL) tanto_push(&current, new);
 			break;
 		}
-		case '{': {
+		case '{': {			
 			new = tanto_lex_object(chunk);
 			tanto_push(&current, new);
 			stack_push(&stack, current);
