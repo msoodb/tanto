@@ -20,10 +20,10 @@
 int main()
 {
 	char *stream = NULL;
-	stream = tanto_read_file("../json/simple.json");
+	//stream = tjson_read_file("../json/simple.json");
 
 	
-	TJSON_t *json = NULL;
+	/*TJSON_t *json = NULL;
 	TANTO_INIT(&json);
 
 	if (tanto_parse(&json, stream) < 0){
@@ -31,7 +31,7 @@ int main()
 	}
 	tanto_print(json);
 
-	if (json != NULL) tanto_erase(&json);
+	if (json != NULL) tanto_erase(&json);*/
 	if (stream != NULL) free(stream);
 
 	return 0;

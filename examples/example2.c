@@ -44,48 +44,54 @@
 int main()
 {
 	TJSON_t *json = NULL;
-	TANTO_INIT(&json);
+	TJSON_INIT(&json);
 
 
-	TJSON_t *server = tanto_create_node(TANTO_JSON_OBJECT, "server", NULL);
-	tanto_push(&json, server);
+	TJSON_t *server = tjson_create_node_object("server");
+	tjson_push(&json, server);
 
-	TJSON_t *path = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "path", "http://www.gnu.org/licenses/");
-	tanto_push(&json, path);
+	TJSON_t *path = tjson_create_node_string("path", "http://www.gnu.org/licenses/");
+	tjson_push(&json, path);
 
 	
-	TJSON_t *parser = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "parser", "tanto");
-	TJSON_t *library = tanto_create_node(TANTO_JSON_OBJECT, "library", NULL);
-	TJSON_t *lex = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "lex", "lexer");	
-	tanto_push(&json, parser);
-	tanto_push(&server, library);
-	tanto_push(&server, lex);
+	TJSON_t *parser = tjson_create_node_string("parser", "tanto");
+	TJSON_t *order = tjson_create_node_number("order", 63928.12);
+	TJSON_t *library = tjson_create_node_object("library");
+	TJSON_t *lex = tjson_create_node_string("lex", "lexer");	
+	tjson_push(&json, parser);
+	tjson_push(&json, order);
+	tjson_push(&server, library);
+	tjson_push(&server, lex);
 
-	TJSON_t *usage = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"usage", "example.c");
-	TJSON_t *tests = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"tests", "test.c");	
-	tanto_push(&library, usage);	
-	tanto_push(&library, tests);
+	TJSON_t *usage = tjson_create_node_string("usage", "example.c");
+	TJSON_t *test = tjson_create_node_string("test", "test.c");
+	TJSON_t *support = tjson_create_node_bool("support", true);
+	TJSON_t *address = tjson_create_node_null("address");
+	tjson_push(&library, usage);	
+	tjson_push(&library, test);	
+	tjson_push(&library, support);
+	tjson_push(&library, address);
 
 
-	TJSON_t *color = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "color", "red");
-	tanto_push(&json, color);
+	TJSON_t *color = tjson_create_node_string("color", "red");
+	tjson_push(&json, color);
 
-	TJSON_t *main = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"main", "main.c");	
-	tanto_push(&json, main);
+	TJSON_t *main = tjson_create_node_string("main", "main.c");	
+	tjson_push(&json, main);
 
 
-	TJSON_t *functions = tanto_create_node(TANTO_JSON_ARRAY, "functions", NULL);
-	tanto_push(&json, functions);
-	TJSON_t *pop = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"pop", NULL);	
-	tanto_push(&functions, pop);
-	TJSON_t *push = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"push", NULL);	
-	tanto_push(&functions, push);
+	TJSON_t *functions = tjson_create_node_array("functions");
+	tjson_push(&json, functions);
+	TJSON_t *pop = tjson_create_node_string(NULL, "pop");	
+	tjson_push(&functions, pop);
+	TJSON_t *push = tjson_create_node_string(NULL, "push");	
+	tjson_push(&functions, push);
 	
 	
-	//tanto_print(json);		
-	tanto_write_file("../json/example2-output.json", json);
+	tjson_print(json);		
+	//tjson_write_file("../json/example2-output.json", json);
 
-	if (json != NULL) tanto_erase(&json);
+	if (json != NULL) tjson_erase(&json);
 
 	return 0;
 }
