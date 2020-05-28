@@ -1,5 +1,4 @@
-# json parser and creator library in C
-## under development, not ready to use!
+# json parser and creator library in C, under development, not ready to use!
 
 > tanto.h
 
@@ -12,37 +11,59 @@ To use tanto you can include tanto.h header file.
 
 # typedef in tanto.h
 ```
-TJSON_t
+TJSON_t *json;
 ```
 
 # example usage
 ```
 TJSON_t *json = NULL;
-	
-TJSON_t *node1 = tanto_init_node("hello", "world!", 1);
-TJSON_t *node2 = tanto_init_node("parser", "tanto", 1);
-tanto_push(&json, node1);
-tanto_push(&json, node2);
+TANTO_INIT(&json);
 
-tanto_write_file("hello_world.json", json);
+
+TJSON_t *server = tanto_create_node(TANTO_JSON_OBJECT, "server", NULL);
+tanto_push(&json, server);
+
+TJSON_t *path = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "path", "http://www.gnu.org/licenses/");
+tanto_push(&json, path);
+
+
+TJSON_t *parser = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "parser", "tanto");
+TJSON_t *library = tanto_create_node(TANTO_JSON_OBJECT, "library", NULL);
+TJSON_t *lex = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "lex", "lexer");	
+tanto_push(&json, parser);
+tanto_push(&server, library);
+tanto_push(&server, lex);
+
+TJSON_t *usage = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"usage", "example.c");
+TJSON_t *tests = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"tests", "test.c");	
+tanto_push(&library, usage);	
+tanto_push(&library, tests);
+
+
+TJSON_t *color = tanto_create_node(TANTO_JSON_OBJECT_FIELD, "color", "red");
+tanto_push(&json, color);
+
+TJSON_t *main = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"main", "main.c");	
+tanto_push(&json, main);
+
+
+TJSON_t *functions = tanto_create_node(TANTO_JSON_ARRAY, "functions", NULL);
+tanto_push(&json, functions);
+TJSON_t *pop = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"pop", NULL);	
+tanto_push(&functions, pop);
+TJSON_t *push = tanto_create_node(TANTO_JSON_OBJECT_FIELD ,"push", NULL);	
+tanto_push(&functions, push);
+
+tanto_write_file("../json/example2-output.json", json);
 ```
-you can find all usage examples in examples folder.
 
-# Build examples
-
-## in folder examples
-
-
-> example1.c
+## make examples
 
 ```
-$ cc -o example1 example1.c -Wall -Wextra -pedantic
-$ ./example1
+$ make example
 ````
 
-> example2.c
-
 ```
-$ cc -o example2 example2.c -Wall -Wextra -pedantic
+$ ./example1
 $ ./example2
 ````

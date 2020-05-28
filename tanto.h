@@ -302,12 +302,6 @@ success:
 	return node;
 }
   
-/*
- * "------": "-------",
- * "------": "-------"}
- * "------",
- * "------"]
- */
 TJSON_t *tanto_lex_field(char *chunk)
 {       
 	TJSON_t *node;
@@ -435,8 +429,6 @@ void tanto_parse(TJSON_t **json, const char *stream)
 
 	if (stack != NULL) free(stack);
 	if (current != NULL) free(current);
-	//if (new) free (new);  /* Seg fault */
-	//if (chunk != NULL) free (chunk);
 	
 	return;
 }

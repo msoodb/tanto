@@ -82,9 +82,8 @@ int main()
 	tanto_push(&functions, push);
 	
 	
-	//tanto_print(json);
-		
-	tanto_write_file("json/example3-output.json", json);
+	//tanto_print(json);		
+	tanto_write_file("../json/example2-output.json", json);
 
 	return 0;
 }
