@@ -35,7 +35,6 @@
 #define TANTO_JSON_ARRAY_FIELD     6
 
 
-
 typedef struct __json
 {
 	struct __json *child;
