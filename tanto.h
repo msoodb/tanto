@@ -20,6 +20,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+//#include <regex.h>
 
 #define _LIBRARY_NAME       "tanto"
 #define _LIBRARY_DESC       "json parser and creator library in C"
@@ -28,11 +29,6 @@
 #define _LIBRARY_URL        "https://msoodb.org/tanto"
 
 #define TJSON_INIT(json)     tjson_init((json));
-
-/*#define TANTO_JSON_OBJECT          0
-#define TANTO_JSON_ARRAY           1
-#define TANTO_JSON_OBJECT_FIELD    5
-#define TANTO_JSON_ARRAY_FIELD     6*/
 
 
 #define TJSON_STRING          0
@@ -184,52 +180,6 @@ TJSON_t *tjson_create_node_null(char *key)
 	return node;
 }
 
-/*TJSON_t *tjson_create_node(int v_type, char *key, char *value)
-{
-	T JSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
-	if (node == NULL) return NULL;
-	
-	node->child = NULL;
-	node->next = NULL;
-
-	node->key = NULL;
-	node->value = NULL;
-	node->type = type;
-	
-	if (key != NULL) {
-		size_t z;
-		z = strlen(key);
-		node->key = (char *)malloc(sizeof(char) * (z+1));
-		memcpy(node->key, key, z);
-		node->key[z] = '\0';
-	}
-
-	if (value != NULL) {
-		size_t z;
-		z = strlen(value);
-		node->value = (char *)malloc(sizeof(char) * (z+1));
-		memcpy(node->value, value, z);
-		node->value[z] = '\0';
-		}
-
-	return node;
-	}*/
-
-/*TJSON_t *_tanto_create_node(int type, char *key, char *value)
-{
-	TJSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
-	if (node == NULL) return NULL;
-	
-	node->child = NULL;
-	node->next = NULL;
-
-	node->key = key;
-	node->value = value;
-	node->type = type;
-	
-	return node;
-	}*/
-
 void tjson_init(TJSON_t **json)
 {
 	TJSON_t *node = _tjson_create_node_empty(NULL, TJSON_OBJECT);
@@ -302,7 +252,7 @@ void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 			break;
 		}
 		case TJSON_NUMBER: {
-			fprintf(fp, "%6.2lf", json->v_number);
+			fprintf(fp, "%.3lf", json->v_number);
 			break;
 		}
 		case TJSON_BOOL: {
@@ -317,7 +267,6 @@ void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 		default:
 			break;
 		}
-		
 		
 		comma = 1;
 		
@@ -354,145 +303,87 @@ void tjson_print_addr(TJSON_t *json)
 	}	
 }
 
-TJSON_t *tjson_lex_object(char *chunk)
-{       
+/* TO DO: replace with regex */
+TJSON_t *tjson_lex(char *chunk)
+{
 	TJSON_t *node;
 	size_t step;
-
+	
 	char *key;
-	char *value;
-	int type;
+	int v_type;	
+	char *v_string;
+	double v_number;
+	bool v_bool;
+
+
+	char *first;
+	char *second;
 	
 	node = NULL;
 
-	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;	
-	if (strlen(chunk) < 1) goto failure;
-
+		
+	while(isspace((unsigned char)*chunk)) chunk++;
 	char delimiter = *chunk;
+
+	if (*chunk == ',') return NULL;
 	if (delimiter == '{') {
 		key = NULL;
-		type = TJSON_OBJECT;
-		value = NULL;
+		node = tjson_create_node_object(key);
 		goto success;
 	}
-
-
-	// key
+	if (delimiter == '[') {
+		key = NULL;
+		node = tjson_create_node_array(key);
+		goto success;
+	}
+	if (delimiter == '}') return NULL;
+	if (delimiter == ']')return NULL;
+	if (delimiter != '"')return NULL;
+	
+		
+	while(*chunk == '"') chunk++;
+	
+	// first
 	step = strcspn(chunk, "\"");
-	key = malloc(sizeof(char) * (step + 1));	
-	if (key == NULL) goto failure;	
-	memcpy(key, chunk, step);
-	key[step] = '\0';
+	first = malloc(sizeof(char) * (step + 1));	
+	if (first == NULL) return NULL;	
+	memcpy(first, chunk, step);
+	first[step] = '\0';
 	chunk += step + 1;
-			
 
-	// type
-	type = TJSON_OBJECT;
-
-	// value
-	value = NULL;
-
-	goto success;
-
-failure:
-	node = NULL;
-	if (key != NULL) free(key);
-	return node;
-	
-success:
-	//node = _tanto_create_node(type, key, value);
-	return node;
-}
-
-TJSON_t *tjson_lex_array(char *chunk) 
-{ 
- 	TJSON_t *node;
-	size_t step;
-
-	char *key;
-	char *value;
-	int type;
-	
-	node = NULL;
-
-	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++;
-	if (strlen(chunk) <= 1) goto failure;
-
-
-	// key
-	step = strcspn(chunk, "\"");
-	key = malloc(sizeof(char) * (step + 1));	
-	if (key == NULL) goto failure;	
-	memcpy(key, chunk, step);
-	key[step] = '\0';
-	chunk += step + 1;
-			
-
-	// type
-	type = TJSON_ARRAY;
-
-	// value
-	value = NULL;
-
-	goto success;
-
-failure:
-	node = NULL;
-	return node;
-
-success:
-	//node = _tanto_create_node(type, key, value);
-	return node;
-}
-  
-TJSON_t *tjson_lex_field(char *chunk)
-{       
-	TJSON_t *node;
-	size_t step;
-
-	char *key;
-	char *value;
-	int type;
-	
-	node = NULL;
-	
-	while(isspace((unsigned char)*chunk) || *chunk == '"') chunk++; 
-	if (strlen(chunk) <= 1) goto failure;
-
-	// key
-	step = strcspn(chunk, "\"");
-	key = malloc(sizeof(char) * (step + 1));	
-	if (key == NULL) goto failure;	
-	memcpy(key, chunk, step);
-	key[step] = '\0';
-	chunk += step + 1;
-			
-
-	// type 
 	while(isspace((unsigned char)*chunk)) chunk++;
+	delimiter = *chunk;
 	if (*chunk == ',' || *chunk == ']') {
-		type = TJSON_STRING;
-		value = NULL;
+		key = NULL;
+		node = tjson_create_node_string(NULL, first);
 		goto success;
 	}
+	if (delimiter != ':')return NULL;
 
 	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"') chunk++;
+	delimiter = *chunk;
+	if (*chunk == '{') {
+		key = NULL;
+		node = tjson_create_node_object(first);
+		goto success;
+	}
+	if (*chunk == '[') {
+		key = NULL;
+		node = tjson_create_node_array(first);
+		goto success;
+	}
 
-	// value
+	// second
 	step = strcspn(chunk, "\"");
-	value = malloc(sizeof(char) * (step + 1));
-	if (value == NULL) goto failure;
-	
-	memcpy(value, chunk, step);
-	value[step] = '\0';
-	type = TJSON_STRING;
+	second = malloc(sizeof(char) * (step + 1));	
+	if (second == NULL) return NULL;	
+	memcpy(second, chunk, step);
+	second[step] = '\0';
+	chunk += step + 1;	
+
+	node = tjson_create_node_string(first, second);
 	
 success:
-	//node = _tanto_create_node(type, key, value);
-	return node;
-
-failure:	
-	node = NULL;
 	return node;
 }
 
@@ -527,38 +418,47 @@ int tjson_parse(TJSON_t **json, const char *stream)
 
 		// delimiter
 		delimiter = *(stream + step);
-
 		
 		switch (delimiter) {
 		case ',': {			
-			new = tjson_lex_field(chunk);
-			if (new != NULL) tjson_push(&current, new);
+			new = tjson_lex(chunk);
+			if (new != NULL) {
+				tjson_push(&current, new);
+			}
 			break;
 		}
 		case '{': {			
-			//new = tanto_lex_object(chunk);
-			tjson_push(&current, new);
-			_stack_push(&stack, current);
-			current = new;
+			new = tjson_lex(chunk);
+			if (new != NULL) {
+				tjson_push(&current, new);
+				_stack_push(&stack, current);
+				current = new;
+			}
 			break;
 		}
 		case '[': {
-			//new = tjson_lex_array(chunk);
-			tjson_push(&current, new);
-			_stack_push(&stack, current);
-			current = new;
+			new = tjson_lex(chunk);			
+			if (new != NULL) {
+				tjson_push(&current, new);
+				_stack_push(&stack, current);
+				current = new;
+			}
 			break;
 		}
 		case ']': {
-			//new = tjson_lex_field(chunk);			
-			if (new != NULL) tjson_push(&current, new);
-			current = _stack_pop(&stack);
+			new = tjson_lex(chunk);
+			if (new != NULL) {
+				tjson_push(&current, new);
+				current = _stack_pop(&stack);
+			}
 			break;
 		}
 		case '}': {
-			new = tjson_lex_field(chunk);
-			if (new != NULL) tjson_push(&current, new);
-			current = _stack_pop(&stack);
+			new = tjson_lex(chunk);
+			if (new != NULL) {
+				tjson_push(&current, new);
+				current = _stack_pop(&stack);
+			}
 			break;
 		}
 		default:
@@ -569,7 +469,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 		stream += (step+1);
  	}
 
-	if (current != NULL) _tjson_erase_node(&current);
+	//if (current != NULL) _tjson_erase_node(&current);
 	if (stack != NULL) {		
 		free(stack);
 		return -1;

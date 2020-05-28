@@ -86,6 +86,15 @@ int main()
 	tjson_push(&functions, pop);
 	TJSON_t *push = tjson_create_node_string(NULL, "push");	
 	tjson_push(&functions, push);
+	TJSON_t *delete = tjson_create_node_object(NULL);
+	tjson_push(&functions, delete);
+
+	TJSON_t *delete1 = tjson_create_node_string("delete1", "recursive");	
+	tjson_push(&delete, delete1);
+
+	TJSON_t *delete2 = tjson_create_node_string("delete2", "iterative");	
+	tjson_push(&delete, delete2);
+
 	
 	
 	tjson_print(json);		
