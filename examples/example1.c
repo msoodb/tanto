@@ -19,14 +19,18 @@
 */
 int main()
 {
-	char *stream;
+	char *stream = NULL;
 	stream = tanto_read_file("../json/simple.json");
 
+	
 	TJSON_t *json = NULL;
 	TANTO_INIT(&json);
 
 	tanto_parse(&json, stream);	
 	tanto_print(json);
+
+	if (json != NULL) tanto_erase(&json);
+	if (stream != NULL) free(stream);
 
 	return 0;
 }

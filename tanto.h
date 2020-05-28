@@ -74,7 +74,8 @@ TJSON_t *stack_pop(S_NODE_t **stack)
 	top = *stack;	
 	data = top->data;	
 	*stack = top->next;
-	free(top);
+
+	free(top);	
 	
 	return data;
 }
@@ -354,7 +355,7 @@ success:
 	node = tanto_create_node(type, key, value);
 	return node;
 
-failure:
+failure:	
 	node = NULL;
 	return node;
 }
@@ -427,9 +428,16 @@ void tanto_parse(TJSON_t **json, const char *stream)
 		default:
 			break;
 		}
+
+		if (chunk != NULL) free (chunk);
 		stream += (step+1);
  	}
 
+	if (stack != NULL) free(stack);
+	if (current != NULL) free(current);
+	//if (new) free (new);  /* Seg fault */
+	//if (chunk != NULL) free (chunk);
+	
 	return;
 }
 
@@ -441,6 +449,7 @@ char *tanto_read_file(const char *file)
 	
 	fp = NULL;
 	f_size = 0;
+	stream = NULL;
 	
       	fp = fopen(file, "r");
 	if (fp == NULL) return NULL;
@@ -448,12 +457,13 @@ char *tanto_read_file(const char *file)
 	fseek(fp, 0L, SEEK_END);
         f_size = ftell(fp);
         fseek(fp, 0L, SEEK_SET);                               
-
+			
 	stream = (char *)malloc(sizeof(char) * (f_size + 1));             
         fread(stream, sizeof(char), f_size, fp);
 	fclose(fp);
 
-	stream[f_size] = '\0';	
+	stream[f_size] = '\0';
+	
 	return stream;
 }
 
@@ -466,6 +476,31 @@ void tanto_write_file(char *file, TJSON_t *json)
 	_tanto_print(json->child, fp, json->type, 1);
 	
 	fclose(fp);
+}
+
+void _tanto_erase_node(TJSON_t **node)
+{
+	if (*node != NULL){
+		if ((*node)->key != NULL) free((*node)->key);
+		if ((*node)->value != NULL) free((*node)->value);
+		free(*node);
+	}		
+}
+
+void tanto_erase(TJSON_t **json)
+{
+	TJSON_t *current = *json;
+	
+	while (*json) {	
+		if ((*json)->child != NULL) {
+			tanto_erase(&(*json)->child);
+		}
+
+		current = *json;
+		*json = (*json)->next;
+
+		_tanto_erase_node(&current);
+	}
 }
 
 #endif  //__TANTO_H
