@@ -20,13 +20,15 @@
 int main()
 {
 	char *stream = NULL;
-	stream = tanto_read_file("../json/complete.json");
+	stream = tanto_read_file("../json/simple.json");
 
 	
 	TJSON_t *json = NULL;
 	TANTO_INIT(&json);
 
-	tanto_parse(&json, stream);	
+	if (tanto_parse(&json, stream) < 0){
+		printf("%s\n", "Error! while parsing file");
+	}
 	tanto_print(json);
 
 	if (json != NULL) tanto_erase(&json);

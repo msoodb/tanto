@@ -54,6 +54,15 @@ typedef struct __stack_node
 } S_NODE_t;
 
 
+void _tanto_erase_node(TJSON_t **node)
+{
+	if (*node != NULL){
+		if ((*node)->key != NULL) free((*node)->key);
+		if ((*node)->value != NULL) free((*node)->value);
+		free(*node);
+	}		
+}
+
 void stack_push(S_NODE_t **stack, TJSON_t *data)
 { 
 	S_NODE_t *node = (S_NODE_t *)malloc(sizeof(S_NODE_t));
@@ -88,10 +97,41 @@ TJSON_t *tanto_create_node(int type, char *key, char *value)
 	node->child = NULL;
 	node->next = NULL;
 
+	node->key = NULL;
+	node->value = NULL;
+	node->type = type;
+	
+	if (key != NULL) {
+		size_t z;
+		z = strlen(key);
+		node->key = (char *)malloc(sizeof(char) * (z+1));
+		memcpy(node->key, key, z);
+		node->key[z] = '\0';
+	}
+
+	if (value != NULL) {
+		size_t z;
+		z = strlen(value);
+		node->value = (char *)malloc(sizeof(char) * (z+1));
+		memcpy(node->value, value, z);
+		node->value[z] = '\0';
+		}
+
+	return node;
+}
+
+TJSON_t *_tanto_create_node(int type, char *key, char *value)
+{
+	TJSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
+	if (node == NULL) return NULL;
+	
+	node->child = NULL;
+	node->next = NULL;
+
 	node->key = key;
 	node->value = value;
 	node->type = type;
-
+	
 	return node;
 }
 
@@ -207,11 +247,6 @@ void tanto_print_addr(TJSON_t *json)
 	}	
 }
 
-
-/*
- * {
- * "----": {
- */
 TJSON_t *tanto_lex_object(char *chunk)
 {       
 	TJSON_t *node;
@@ -254,10 +289,11 @@ TJSON_t *tanto_lex_object(char *chunk)
 
 failure:
 	node = NULL;
+	if (key != NULL) free(key);
 	return node;
 	
 success:
-	node = tanto_create_node(type, key, value);
+	node = _tanto_create_node(type, key, value);
 	return node;
 }
 
@@ -296,9 +332,9 @@ TJSON_t *tanto_lex_array(char *chunk)
 failure:
 	node = NULL;
 	return node;
-	
+
 success:
-	node = tanto_create_node(type, key, value);
+	node = _tanto_create_node(type, key, value);
 	return node;
 }
   
@@ -344,9 +380,8 @@ TJSON_t *tanto_lex_field(char *chunk)
 	value[step] = '\0';
 	type = TANTO_JSON_OBJECT_FIELD;
 	
-
 success:
-	node = tanto_create_node(type, key, value);
+	node = _tanto_create_node(type, key, value);
 	return node;
 
 failure:	
@@ -354,9 +389,9 @@ failure:
 	return node;
 }
 
-void tanto_parse(TJSON_t **json, const char *stream)
+int tanto_parse(TJSON_t **json, const char *stream)
 {
-	if (stream == NULL) return;
+	if (stream == NULL) return -1;
 	
 	S_NODE_t *stack;
 	TJSON_t *current;
@@ -427,10 +462,13 @@ void tanto_parse(TJSON_t **json, const char *stream)
 		stream += (step+1);
  	}
 
-	if (stack != NULL) free(stack);
-	if (current != NULL) free(current);
+	if (current != NULL) _tanto_erase_node(&current);
+	if (stack != NULL) {		
+		free(stack);
+		return -1;
+	}
 	
-	return;
+	return 0;
 }
 
 char *tanto_read_file(const char *file)
@@ -468,15 +506,6 @@ void tanto_write_file(char *file, TJSON_t *json)
 	_tanto_print(json->child, fp, json->type, 1);
 	
 	fclose(fp);
-}
-
-void _tanto_erase_node(TJSON_t **node)
-{
-	if (*node != NULL){
-		if ((*node)->key != NULL) free((*node)->key);
-		if ((*node)->value != NULL) free((*node)->value);
-		free(*node);
-	}		
 }
 
 void tanto_erase(TJSON_t **json)

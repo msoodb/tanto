@@ -85,5 +85,7 @@ int main()
 	//tanto_print(json);		
 	tanto_write_file("../json/example2-output.json", json);
 
+	if (json != NULL) tanto_erase(&json);
+
 	return 0;
 }
