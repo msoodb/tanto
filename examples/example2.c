@@ -17,23 +17,30 @@
 /* 
  * create this json object and print on stdout or file.
  *
- {
-   "functions": [
-     "push",
-     "pop"
-   ],
-   "main": "main.c",
-   "color": "red",
-   "parser": "tanto",
-   "path": "http://www.gnu.org/licenses/",
-   "server": {
-     "lex": "lexer",
-     "library": {
-       "tests": "test.c",
-       "usage": "example.c"
-     }
-   }
- }
+{
+  "functions": [
+    {
+      "delete2": "iterative",
+      "delete1": "recursive"
+    },
+    "push",
+    "pop"
+  ],
+  "main": "main.c",
+  "color": "red",
+  "order": 63928.120,
+  "parser": "tanto",
+  "path": "http://www.gnu.org/licenses/",
+  "server": {
+    "lex": "lexer",
+    "library": {
+      "address": null,
+      "support": true,
+      "test": "test.c",
+      "usage": "example.c"
+    }
+  }
+}
 */
 
 
