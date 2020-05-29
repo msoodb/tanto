@@ -29,7 +29,9 @@ int main()
 	if (tjson_parse(&json, stream) < 0){
 		printf("%s\n", "Error! while parsing file");
 	}
-	tjson_print(json);
+	else{
+		tjson_print(json);
+	}
 
 	if (json != NULL) tjson_erase(&json);
 	if (stream != NULL) free(stream);

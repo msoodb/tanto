@@ -139,9 +139,8 @@ TJSON_t *tjson_create_node_number(char *key, double v_number)
 {
 	TJSON_t *node = _tjson_create_node_empty(key, TJSON_NUMBER);
 	if (node == NULL) return NULL;
-	
 	node->v_number = v_number;
- 
+
 	return node;
 }
 
@@ -167,7 +166,6 @@ TJSON_t *tjson_create_node_bool(char *key, bool v_bool)
 	if (node == NULL) return NULL;
 
 	node->v_bool = v_bool;
-
 	return node;
 }
 
@@ -244,24 +242,21 @@ void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 			fprintf(fp, "\"%s\"", json->key);
 			if (type != TJSON_ARRAY) fprintf(fp, ": " );
 		}
+		
 		switch (json->v_type) {
-		case TJSON_STRING: {
+		case TJSON_STRING:
 			if (json->v_string != NULL) fprintf(fp, "\"%s\"", json->v_string);
-			break;
-		}
-		case TJSON_NUMBER: {
+			break;		
+		case TJSON_NUMBER: 
 			fprintf(fp, "%.3lf", json->v_number);
-			break;
-		}
-		case TJSON_BOOL: {
+			break;		
+		case TJSON_BOOL: 
 			if (json->v_bool == true) fprintf(fp, "%s", "true");
 			else if (json->v_bool == false) fprintf(fp, "%s", "false");
-			break;
-		}
-		case TJSON_NULL: {
+			break;		
+		case TJSON_NULL: 
 			fprintf(fp, "%s", "null");
-			break;
-		}
+			break;		
 		default:
 			break;
 		}
@@ -301,43 +296,39 @@ void tjson_print_addr(TJSON_t *json)
 	}	
 }
 
-/* TO DO: replace with regex */
 TJSON_t *tjson_lex(char *chunk)
 {
 	TJSON_t *node;
 	size_t step;
 	
-	char *key;
+	//char *key;
 	//int v_type;	
 	//char *v_string;
 	//double v_number;
 	//bool v_bool;
 
-
 	char *first;
 	char *second;
 	
 	node = NULL;
-
 		
 	while(isspace((unsigned char)*chunk)) chunk++;
 	char delimiter = *chunk;
 
-	if (*chunk == ',') return NULL;
-	if (delimiter == '{') {
-		key = NULL;
-		node = tjson_create_node_object(key);
-		goto success;
+	switch (delimiter) {
+	case ',':
+	case ']':
+	case '}':
+		return NULL;
+	case '[':
+		node = tjson_create_node_array(NULL);
+		return node;	
+	case '{':
+		node = tjson_create_node_object(NULL);
+		return node;
 	}
-	if (delimiter == '[') {
-		key = NULL;
-		node = tjson_create_node_array(key);
-		goto success;
-	}
-	if (delimiter == '}') return NULL;
-	if (delimiter == ']')return NULL;
-	if (delimiter != '"')return NULL;
-	
+
+	if (delimiter != '"') return NULL;	
 		
 	while(*chunk == '"') chunk++;
 	
@@ -352,7 +343,6 @@ TJSON_t *tjson_lex(char *chunk)
 	while(isspace((unsigned char)*chunk)) chunk++;
 	delimiter = *chunk;
 	if (*chunk == ',' || *chunk == ']') {
-		key = NULL;
 		node = tjson_create_node_string(NULL, first);
 		goto success;
 	}
@@ -361,12 +351,10 @@ TJSON_t *tjson_lex(char *chunk)
 	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"') chunk++;
 	delimiter = *chunk;
 	if (*chunk == '{') {
-		key = NULL;
 		node = tjson_create_node_object(first);
 		goto success;
 	}
 	if (*chunk == '[') {
-		key = NULL;
 		node = tjson_create_node_array(first);
 		goto success;
 	}
@@ -400,9 +388,11 @@ int tjson_parse(TJSON_t **json, const char *stream)
 	chunk = NULL;
 	step = 0;
 	
-
-	step = strcspn(stream, "{");
-	stream += (step + 1);
+	while(isspace((unsigned char)*stream)) stream++;
+	delimiter = *stream;
+	if (delimiter != '{') return -1;
+		
+	stream++;
 	current = *json;
 
 	while (*stream != '\0') {	
@@ -412,35 +402,30 @@ int tjson_parse(TJSON_t **json, const char *stream)
 		memcpy(chunk, stream, step + 1);
 		chunk[step + 1] = '\0';
 
+		new = tjson_lex(chunk);
+		if (new != NULL) tjson_push(&current, new);
+
 		delimiter = *(stream + step);
-		
 		switch (delimiter) {
-		case ',': {			
-			new = tjson_lex(chunk);
-			if (new != NULL) tjson_push(&current, new);
-			break;
-		}
 		case '{': 			
-		case '[': {
-			new = tjson_lex(chunk);			
-			if (new != NULL) tjson_push(&current, new);
+		case '[':
 			_stack_push(&stack, current);
 			current = new;			
-			break;
-		}
-		case ']': 
-		case '}': {
-			new = tjson_lex(chunk);
-			if (new != NULL) tjson_push(&current, new);
+			break;		
+		case ']':
+			if (current->v_type != TJSON_ARRAY) return -1;
 			current = _stack_pop(&stack);			
-			break;
-		}
+			break;		
+		case '}':
+			if (current->v_type != TJSON_OBJECT) return -1;
+			current = _stack_pop(&stack);			
+			break;		
 		default:
 			break;
 		}
 
 		if (chunk != NULL) free (chunk);
-		stream += (step+1);
+		stream += (step + 1);
  	}
 
 	if (current != NULL) _tjson_erase_node(&current);
