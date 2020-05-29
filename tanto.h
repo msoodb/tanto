@@ -20,11 +20,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-//#include <regex.h>
 
 #define _LIBRARY_NAME       "tanto"
 #define _LIBRARY_DESC       "json parser and creator library in C"
-#define _LIBRARY_AUTHORS    "msoodb (Masoud Bolhassani)"
+#define _LIBRARY_AUTHORS    "msoodb (Masoud Bolhassani), adavari (Alireza Davari)"
 #define _LIBRARY_VERSION    "0.0.1"
 #define _LIBRARY_URL        "https://msoodb.org/tanto"
 
@@ -62,11 +61,11 @@ typedef struct __stack_node
 
 void _tjson_erase_node(TJSON_t **node)
 {
-	if (*node != NULL){
-		if ((*node)->key != NULL) free((*node)->key);
-		if ((*node)->v_string != NULL) free((*node)->v_string);
-		free(*node);
-	}		
+	if (*node == NULL) return;
+
+	if ((*node)->key != NULL) free((*node)->key);
+	if ((*node)->v_string != NULL) free((*node)->v_string);
+	free(*node);			
 }
 
 void _stack_push(S_NODE_t **stack, TJSON_t *data)
@@ -237,7 +236,6 @@ void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 	
 	fprintf(fp, "%c\n", start);
 	while (json != NULL) {
-
 		if (comma) fprintf(fp, "%c\n", ',');
 
 		fprintf(fp, "%*s", level*2, "");
@@ -310,10 +308,10 @@ TJSON_t *tjson_lex(char *chunk)
 	size_t step;
 	
 	char *key;
-	int v_type;	
-	char *v_string;
-	double v_number;
-	bool v_bool;
+	//int v_type;	
+	//char *v_string;
+	//double v_number;
+	//bool v_bool;
 
 
 	char *first;
@@ -358,7 +356,7 @@ TJSON_t *tjson_lex(char *chunk)
 		node = tjson_create_node_string(NULL, first);
 		goto success;
 	}
-	if (delimiter != ':')return NULL;
+	if (delimiter != ':') return NULL;
 
 	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"') chunk++;
 	delimiter = *chunk;
@@ -407,58 +405,34 @@ int tjson_parse(TJSON_t **json, const char *stream)
 	stream += (step + 1);
 	current = *json;
 
-	// iterate over stream
 	while (*stream != '\0') {	
 		step = strcspn(stream, ",{[]}");
 
-		// get chunk plus delimiters
 		chunk = malloc(sizeof(char) * (step + 2));
 		memcpy(chunk, stream, step + 1);
 		chunk[step + 1] = '\0';
 
-		// delimiter
 		delimiter = *(stream + step);
 		
 		switch (delimiter) {
 		case ',': {			
 			new = tjson_lex(chunk);
-			if (new != NULL) {
-				tjson_push(&current, new);
-			}
+			if (new != NULL) tjson_push(&current, new);
 			break;
 		}
-		case '{': {			
-			new = tjson_lex(chunk);
-			if (new != NULL) {
-				tjson_push(&current, new);
-				_stack_push(&stack, current);
-				current = new;
-			}
-			break;
-		}
+		case '{': 			
 		case '[': {
 			new = tjson_lex(chunk);			
-			if (new != NULL) {
-				tjson_push(&current, new);
-				_stack_push(&stack, current);
-				current = new;
-			}
+			if (new != NULL) tjson_push(&current, new);
+			_stack_push(&stack, current);
+			current = new;			
 			break;
 		}
-		case ']': {
-			new = tjson_lex(chunk);
-			if (new != NULL) {
-				tjson_push(&current, new);
-				current = _stack_pop(&stack);
-			}
-			break;
-		}
+		case ']': 
 		case '}': {
 			new = tjson_lex(chunk);
-			if (new != NULL) {
-				tjson_push(&current, new);
-				current = _stack_pop(&stack);
-			}
+			if (new != NULL) tjson_push(&current, new);
+			current = _stack_pop(&stack);			
 			break;
 		}
 		default:
@@ -469,7 +443,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 		stream += (step+1);
  	}
 
-	//if (current != NULL) _tjson_erase_node(&current);
+	if (current != NULL) _tjson_erase_node(&current);
 	if (stack != NULL) {		
 		free(stack);
 		return -1;
