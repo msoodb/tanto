@@ -60,12 +60,29 @@ typedef struct __stack_node
 
 
 void _tjson_erase_node(TJSON_t **node)
-{
+{	
 	if (*node == NULL) return;
 
 	if ((*node)->key != NULL) free((*node)->key);
 	if ((*node)->v_string != NULL) free((*node)->v_string);
+	
 	free(*node);			
+}
+
+void tjson_erase(TJSON_t **json)
+{
+	TJSON_t *current = *json;
+	
+	while (*json) {	
+		if ((*json)->child != NULL) {
+			tjson_erase(&(*json)->child);
+		}
+
+		current = *json;
+		*json = (*json)->next;
+
+		_tjson_erase_node(&current);
+	}
 }
 
 void _stack_push(S_NODE_t **stack, TJSON_t *data)
@@ -123,7 +140,7 @@ TJSON_t *tjson_create_node_string(char *key, char *v_string)
 {
 	TJSON_t *node = _tjson_create_node_empty(key, TJSON_STRING);
 	if (node == NULL) return NULL;
-	
+
 	if (v_string != NULL) {
 		size_t z;
 		z = strlen(v_string);
@@ -139,9 +156,8 @@ TJSON_t *tjson_create_node_number(char *key, double v_number)
 {
 	TJSON_t *node = _tjson_create_node_empty(key, TJSON_NUMBER);
 	if (node == NULL) return NULL;
-	
 	node->v_number = v_number;
- 
+
 	return node;
 }
 
@@ -167,7 +183,6 @@ TJSON_t *tjson_create_node_bool(char *key, bool v_bool)
 	if (node == NULL) return NULL;
 
 	node->v_bool = v_bool;
-
 	return node;
 }
 
@@ -244,24 +259,21 @@ void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 			fprintf(fp, "\"%s\"", json->key);
 			if (type != TJSON_ARRAY) fprintf(fp, ": " );
 		}
+		
 		switch (json->v_type) {
-		case TJSON_STRING: {
+		case TJSON_STRING:
 			if (json->v_string != NULL) fprintf(fp, "\"%s\"", json->v_string);
-			break;
-		}
-		case TJSON_NUMBER: {
+			break;		
+		case TJSON_NUMBER: 
 			fprintf(fp, "%.3lf", json->v_number);
-			break;
-		}
-		case TJSON_BOOL: {
+			break;		
+		case TJSON_BOOL: 
 			if (json->v_bool == true) fprintf(fp, "%s", "true");
 			else if (json->v_bool == false) fprintf(fp, "%s", "false");
-			break;
-		}
-		case TJSON_NULL: {
+			break;		
+		case TJSON_NULL: 
 			fprintf(fp, "%s", "null");
-			break;
-		}
+			break;		
 		default:
 			break;
 		}
@@ -301,89 +313,149 @@ void tjson_print_addr(TJSON_t *json)
 	}	
 }
 
-/* TO DO: replace with regex */
-TJSON_t *tjson_lex(char *chunk)
+/* TO DO : pass pointer to str, ...(char **str) */
+char *_trim_whitespace(char *str)
 {
-	TJSON_t *node;
+	char *end;
+
+	while(isspace((unsigned char)*str)) str++;
+	if(*str == 0) 
+		return str;
+
+	end = str + strlen(str) - 1;
+	while(end > str && isspace((unsigned char)*end)) end--;
+
+	end[1] = '\0';
+	return str;
+}
+
+/* TO DO : pass pointer to str, ...(char **str) */
+char *_trim_double_quote(char *str)
+{
+	if (str == NULL) return NULL;
+	char *end;
+
+	while(*str == '"') str++;
+	if(*str == 0) 
+		return str;
+
+	end = str + strlen(str) - 1;
+	while(end > str && *end == '"') end--;
+
+	end[1] = '\0';
+	return str;
+}
+
+int _is_numeric(const char *s)
+{
+	if (s == NULL || *s == '\0' || isspace(*s))
+		return 0;
+
+	char * p;
+	strtod (s, &p);
+	return *p == '\0';
+}
+
+int tjson_lex(char *chunk, TJSON_t **node)
+{	
 	size_t step;
 	
 	char *key;
-	//int v_type;	
-	//char *v_string;
-	//double v_number;
-	//bool v_bool;
+	char *value;
 
+	char *v_string;
+	double v_number;
+	bool v_bool;
 
-	char *first;
-	char *second;
-	
-	node = NULL;
+	step = 0;	
+	key = value = v_string = NULL;
+	v_number = 0;
+	v_bool = false;
 
-		
 	while(isspace((unsigned char)*chunk)) chunk++;
 	char delimiter = *chunk;
 
-	if (*chunk == ',') return NULL;
-	if (delimiter == '{') {
-		key = NULL;
-		node = tjson_create_node_object(key);
+	switch (delimiter) {
+	case '\0':
+	case ',':
+	case ']':
+	case '}':
+		*node = NULL;
 		goto success;
-	}
-	if (delimiter == '[') {
-		key = NULL;
-		node = tjson_create_node_array(key);
+	case '[':
+		*node = tjson_create_node_array(NULL);
+		goto success;	
+	case '{':
+		*node = tjson_create_node_object(NULL);
 		goto success;
+	case '"':
+		break;
+	default:
+		break;			
 	}
-	if (delimiter == '}') return NULL;
-	if (delimiter == ']')return NULL;
-	if (delimiter != '"')return NULL;
+
 	
-		
-	while(*chunk == '"') chunk++;
-	
-	// first
-	step = strcspn(chunk, "\"");
-	first = malloc(sizeof(char) * (step + 1));	
-	if (first == NULL) return NULL;	
-	memcpy(first, chunk, step);
-	first[step] = '\0';
+	// extract key
+	step = strcspn(chunk, ":,]\n");
+	key = malloc(sizeof(char) * (step + 1));
+	if (key == NULL)
+		goto failure;	
+	memcpy(key, chunk, step);
+	key[step] = '\0';		
+	key = _trim_whitespace(key);
 	chunk += step + 1;
+	
+	// extract value
+	while(isspace((unsigned char)*chunk) || *chunk == ':') chunk++;
+	step = strcspn(chunk, ",]}\n");
+	if (step > 0) {
+		value = malloc(sizeof(char) * (step + 1));
+		if (value == NULL)
+			goto failure;	
+		memcpy(value, chunk, step);
+		value[step] = '\0';	
+		chunk += step + 1;
 
-	while(isspace((unsigned char)*chunk)) chunk++;
-	delimiter = *chunk;
-	if (*chunk == ',' || *chunk == ']') {
-		key = NULL;
-		node = tjson_create_node_string(NULL, first);
-		goto success;
+		value = _trim_whitespace(value);		
 	}
-	if (delimiter != ':') return NULL;
-
-	while(isspace((unsigned char)*chunk) || *chunk == ':' || *chunk == '"') chunk++;
-	delimiter = *chunk;
-	if (*chunk == '{') {
+	if (key && value == NULL) {
+		value = key;
 		key = NULL;
-		node = tjson_create_node_object(first);
-		goto success;
 	}
-	if (*chunk == '[') {
-		key = NULL;
-		node = tjson_create_node_array(first);
-		goto success;
+	key = _trim_double_quote(key);
+		
+
+
+	if (_is_numeric(value)) {		
+		v_number = strtod(value, NULL);
+		*node = tjson_create_node_number(key, v_number);
 	}
-
-	// second
-	step = strcspn(chunk, "\"");
-	second = malloc(sizeof(char) * (step + 1));	
-	if (second == NULL) return NULL;	
-	memcpy(second, chunk, step);
-	second[step] = '\0';
-	chunk += step + 1;	
-
-	node = tjson_create_node_string(first, second);
+	else if (strcmp(value, "null") == 0) {
+		*node = tjson_create_node_null(key);
+	}
+	else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0) {
+		v_bool = true ? strcmp(value, "true") == 0 : false;
+		*node = tjson_create_node_bool(key, v_bool);
+	}
+	else if (strcmp(value, "[") == 0) {
+		*node = tjson_create_node_array(key);
+	}
+	else if (strcmp(value, "{") == 0) {
+		*node = tjson_create_node_object(key);
+	}
+	else {
+		v_string = _trim_double_quote(value);	
+		*node = tjson_create_node_string(key, v_string);
+	}
 	
 success:
-	return node;
+	return 1;
+
+failure:
+	*node = NULL;
+	return -1;
 }
+
 
 int tjson_parse(TJSON_t **json, const char *stream)
 {
@@ -397,53 +469,61 @@ int tjson_parse(TJSON_t **json, const char *stream)
 	char delimiter;
 	
 	stack = NULL;
+	current = NULL;
+	new = NULL;
 	chunk = NULL;
 	step = 0;
 	
-
-	step = strcspn(stream, "{");
-	stream += (step + 1);
+	while(isspace((unsigned char)*stream)) stream++;
+	delimiter = *stream;
+	if (delimiter != '{') return -1;
+		
+	stream++;
 	current = *json;
 
-	while (*stream != '\0') {	
+	while (*stream != '\0') {
 		step = strcspn(stream, ",{[]}");
 
 		chunk = malloc(sizeof(char) * (step + 2));
 		memcpy(chunk, stream, step + 1);
 		chunk[step + 1] = '\0';
 
+		if (tjson_lex(chunk, &new) < 0) {
+			return -1;
+		}
+
+		if (new != NULL) {
+			tjson_push(&current, new);
+		}
+
+		
 		delimiter = *(stream + step);
 		
 		switch (delimiter) {
-		case ',': {			
-			new = tjson_lex(chunk);
-			if (new != NULL) tjson_push(&current, new);
-			break;
-		}
 		case '{': 			
-		case '[': {
-			new = tjson_lex(chunk);			
-			if (new != NULL) tjson_push(&current, new);
+		case '[':
 			_stack_push(&stack, current);
 			current = new;			
-			break;
-		}
-		case ']': 
-		case '}': {
-			new = tjson_lex(chunk);
-			if (new != NULL) tjson_push(&current, new);
+			break;		
+		case ']':
+			if (current->v_type != TJSON_ARRAY) return -1;
 			current = _stack_pop(&stack);			
-			break;
-		}
+			break;		
+		case '}':
+			if (current->v_type != TJSON_OBJECT) return -1;
+			current = _stack_pop(&stack);			
+			break;		
 		default:
 			break;
 		}
-
+		
 		if (chunk != NULL) free (chunk);
-		stream += (step+1);
+		stream += (step + 1);
  	}
 
-	if (current != NULL) _tjson_erase_node(&current);
+	// TO DO : Bug Fix. */
+	if (current != NULL) tjson_erase(&current);
+	
 	if (stack != NULL) {		
 		free(stack);
 		return -1;
@@ -469,7 +549,7 @@ char *tjson_read_file(const char *file)
         f_size = ftell(fp);
         fseek(fp, 0L, SEEK_SET);                               
 			
-	stream = (char *)malloc(sizeof(char) * (f_size + 1));             
+	stream = (char *)malloc(sizeof(char) * (f_size + 1));
         fread(stream, sizeof(char), f_size, fp);
 	fclose(fp);
 
@@ -489,20 +569,5 @@ void tjson_write_file(char *file, TJSON_t *json)
 	fclose(fp);
 }
 
-void tjson_erase(TJSON_t **json)
-{
-	TJSON_t *current = *json;
-	
-	while (*json) {	
-		if ((*json)->child != NULL) {
-			tjson_erase(&(*json)->child);
-		}
-
-		current = *json;
-		*json = (*json)->next;
-
-		_tjson_erase_node(&current);
-	}
-}
 
 #endif  //__TANTO_H

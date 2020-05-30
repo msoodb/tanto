@@ -5,6 +5,7 @@ example:
 	mkdir -p examples/bin
 	$(CC) $(CFLAGS) -o examples/bin/example1 examples/example1.c
 	$(CC) $(CFLAGS) -o examples/bin/example2 examples/example2.c
+	$(CC) $(CFLAGS) -o examples/bin/example3 examples/example3.c
 
 clean:
 	rm -rf examples/bin
