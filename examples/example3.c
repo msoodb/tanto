@@ -16,13 +16,36 @@
 
 int main()
 {
+	char *json_file = "str.txt";
 	char *stream = NULL;
-	stream = tjson_read_file("../json/line.json");
 
-	char* token; 
-  
-	while ((token = strtok_r(stream, ":", &stream))) 
-		printf("%s - ", token); 
-  
+	stream = tjson_read_file(json_file);
+	printf("%s\n", stream);
+
+	int status = 0; // 1 IN 0 OUT
+	
+	char c;
+	while (*stream != '\0'){
+		c = *stream;
+
+		if (status == 0 && isspace(c)) {
+			stream++;
+			continue;
+		}
+		
+		switch (c) {
+		case '"':
+			status = (status == 1) ? 0 : 1;
+			break;		
+		default:
+			break;
+		}
+
+		printf("%c", c);
+		stream++;
+	}
+
+	//printf("%s\n", stream);
+	printf("\n");
 	return 0;
 }

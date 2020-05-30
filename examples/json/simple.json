@@ -1,6 +1,6 @@
 {
-    "node1": "world!",
-    "node2": [
+    "node1"  :          "world!",
+      "node2": [
 	{
 	    "node211": "tanto",
 	    "node212": "cli",
