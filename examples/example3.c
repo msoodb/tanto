@@ -14,27 +14,15 @@
 
 #include "../tanto.h"
 
-/* 
- * read jsno file, parse and print 
-*/
 int main()
 {
 	char *stream = NULL;
-	stream = tjson_read_file("../json/simple.json");
+	stream = tjson_read_file("../json/line.json");
 
-	
-	TJSON_t *json = NULL;
-	TJSON_INIT(&json);
-
-	if (tjson_parse(&json, stream) < 0){
-		printf("%s\n", "Error! while parsing file");
-	}
-	/*else{
-		tjson_print(json);
-		}*/
-
-	if (json != NULL) tjson_erase(&json);
-	if (stream != NULL) free(stream);
-
+	char* token; 
+  
+	while ((token = strtok_r(stream, ":", &stream))) 
+		printf("%s - ", token); 
+  
 	return 0;
 }

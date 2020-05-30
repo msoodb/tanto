@@ -7,17 +7,17 @@
 	    "node213": "kci"
 	},
 	{
-	    "node221": "masoud"
+	    "node221": 2020.991
 	}	
     ],
-    "node3": "Awesome 4K",
+    "node3": "Awo 4K",
     "node4": {
-	"node41": "true",
+	"node41": true,
 	"node42": {
 	    "node421": "day",
-	    "node422": "night"
+	    "node422": null
 	},
-	"node43": "false",
+	"node43": false,
 	"node44": "false"
     },
     "node5": "mine"
