@@ -268,7 +268,8 @@ void __tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 		
 		switch (json->v_type) {
 		case TJSON_STRING:
-			if (json->v_string != NULL) fprintf(fp, "\"%s\"", json->v_string);
+			if (json->v_string != NULL)
+				fprintf(fp, "\"%s\"", json->v_string);
 			break;		
 		case TJSON_NUMBER: 
 			fprintf(fp, "%.3lf", json->v_number);
@@ -301,7 +302,6 @@ void tjson_print(TJSON_t *json)
 {
 	__tjson_print(json->child, stdout, json->v_type, 1);
 }
-
 
 void __tjson_print_addr(TJSON_t *json)
 {
@@ -362,24 +362,27 @@ int __is_numeric(const char *s)
 	return *p == '\0';
 }
 
-
+/* TO DO : fix "malloc(): invalid size (unsorted) Aborted (core dumped)". */
 int __tjson_tokenize(const char *stream, char **token)
-{
-	
+{	
 	int token_status;
 	int escape_status;
 	int finish;	
-	size_t step;
+	int step;
 
 	*token = (char *)malloc(sizeof(char));	
 	if (*token == NULL) return -1;
 	**token = '\0';
 
-	/* DELETE this useless piece of shit and OPEN UP GATES of HELL, or FIND and DESTROY the BUG */
-	char *token2;
-	token2 = (char *)malloc(sizeof(char));
-	if (token2 == NULL) return -1;
-	*token2 = '\0';
+	/* 
+	 * DELETE this useless piece of shit and OPEN UP GATES of HELL, 
+	 * or FIND and DESTROY the "malloc(): invalid size (unsorted)
+	 * Aborted (core dumped)" BUG. 
+	 */
+	char *useless;
+	useless = (char *)malloc(sizeof(char));
+	if (useless == NULL) return -1;
+	*useless = '\0';
 		
 	token_status = TJSON_OUT_TOKEN;
 	escape_status = TJSON_OUT_ESCAPE_CHAR;
@@ -395,8 +398,14 @@ int __tjson_tokenize(const char *stream, char **token)
 
 		switch (c) {
 		case '"':
-			if (token_status == TJSON_OUT_TOKEN) token_status = TJSON_IN_TOKEN;
-			else if (escape_status == TJSON_OUT_ESCAPE_CHAR) finish = 1;
+			if (token_status == TJSON_OUT_TOKEN) {
+				token_status = TJSON_IN_TOKEN;
+				strncat(*token, &c, 1);
+			}
+			else if (escape_status == TJSON_OUT_ESCAPE_CHAR) {
+				finish = 1;
+				strncat(*token, &c, 1);
+			}
 			else {
 				escape_status = TJSON_OUT_ESCAPE_CHAR;
 				strncat(*token, &c, 1);
@@ -414,7 +423,8 @@ int __tjson_tokenize(const char *stream, char **token)
 		case 'r':
 		case 't':
 		case 'u':
-			if (escape_status == TJSON_IN_ESCAPE_CHAR) escape_status = TJSON_OUT_ESCAPE_CHAR;			
+			if (escape_status == TJSON_IN_ESCAPE_CHAR)
+				escape_status = TJSON_OUT_ESCAPE_CHAR;
 			strncat(*token, &c, 1);
 			break;
 		case ',':
@@ -433,8 +443,8 @@ int __tjson_tokenize(const char *stream, char **token)
 }
 
 int __tjson_lex(char *chunk, TJSON_t **node)
-{	
-	size_t step;
+{		
+	int token_size;
 	
 	char *key;
 	char *value;
@@ -443,7 +453,6 @@ int __tjson_lex(char *chunk, TJSON_t **node)
 	double v_number;
 	bool v_bool;
 
-	step = 0;	
 	key = value = v_string = NULL;
 	v_number = 0;
 	v_bool = false;
@@ -471,37 +480,19 @@ int __tjson_lex(char *chunk, TJSON_t **node)
 	}
 
 	
-	// extract key
-	step = strcspn(chunk, ":,]\n");
-	key = malloc(sizeof(char) * (step + 1));
-	if (key == NULL)
-		goto failure;	
-	memcpy(key, chunk, step);
-	key[step] = '\0';		
-	key = __trim_whitespace(key);
-	chunk += step + 1;
-	
-	// extract value
-	while(isspace((unsigned char)*chunk) || *chunk == ':') chunk++;
-	step = strcspn(chunk, ",]}\n");
-	if (step > 0) {
-		value = malloc(sizeof(char) * (step + 1));
-		if (value == NULL)
-			goto failure;	
-		memcpy(value, chunk, step);
-		value[step] = '\0';	
-		chunk += step + 1;
+	token_size = __tjson_tokenize(chunk, &key);
+	if (token_size == -1) goto failure;
 
-		value = __trim_whitespace(value);		
-	}
+	chunk += token_size;
+
+	token_size = __tjson_tokenize(chunk, &value);
+	if (token_size == -1) goto failure;
 	if (key && value == NULL) {
 		value = key;
 		key = NULL;
 	}
 	key = __trim_double_quote(key);
 		
-
-
 	if (__is_numeric(value)) {		
 		v_number = strtod(value, NULL);
 		*node = tjson_create_node_number(key, v_number);
@@ -523,7 +514,6 @@ int __tjson_lex(char *chunk, TJSON_t **node)
 		v_string = __trim_double_quote(value);	
 		*node = tjson_create_node_string(key, v_string);
 	}
-	
 success:
 	return 1;
 
@@ -531,7 +521,6 @@ failure:
 	*node = NULL;
 	return -1;
 }
-
 
 int tjson_parse(TJSON_t **json, const char *stream)
 {
@@ -644,6 +633,5 @@ void tjson_write_file(char *file, TJSON_t *json)
 	
 	fclose(fp);
 }
-
 
 #endif  //__TANTO_H

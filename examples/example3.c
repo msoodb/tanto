@@ -16,21 +16,21 @@
 
 int main()
 {
-	char *json_file = "str.txt";
+	char *json_file = "str.txt2";
 	char *stream = NULL;
 
 	stream = tjson_read_file(json_file);
-	printf("ORIGINAL: %s", stream);
+	printf("ORIGINAL:\n.%s.", stream);
 
 	char *token;
 	int token_size;
 
 	token_size = __tjson_tokenize(stream, &token);	
-	printf("KEY: .%s.\n", token);
+	printf("\nKEY: .%s.\n", token);
 
 	stream += token_size;
 	token_size = __tjson_tokenize(stream, &token);
-	printf("VALUE: .%s.\n", token);
+	printf("\nVALUE: .%s.\n", token);
 
 	return 0;
 }
