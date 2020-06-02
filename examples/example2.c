@@ -83,13 +83,13 @@ int main()
 	TJSON_t *color = tjson_create_node_string("color", "red");
 	tjson_push(&json, color);
 
-	TJSON_t *main = tjson_create_node_string("main", "main.c");	
+	TJSON_t *main = tjson_create_node_string("main", "ma: in.c");	
 	tjson_push(&json, main);
 
 
-	TJSON_t *functions = tjson_create_node_array("functions");
+	TJSON_t *functions = tjson_create_node_array("func\"tions");
 	tjson_push(&json, functions);
-	TJSON_t *pop = tjson_create_node_string(NULL, "pop");	
+	TJSON_t *pop = tjson_create_node_string(NULL, "pop:");	
 	tjson_push(&functions, pop);
 	TJSON_t *push = tjson_create_node_string(NULL, "push");	
 	tjson_push(&functions, push);
