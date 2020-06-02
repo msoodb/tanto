@@ -30,18 +30,18 @@
 #define TJSON_INIT(json)     tjson_init((json));
 
 
-#define TJSON_STRING          0
-#define TJSON_NUMBER          1
-#define TJSON_OBJECT          2
-#define TJSON_ARRAY           3
-#define TJSON_BOOL            4
-#define TJSON_NULL            5
+#define TJSON_STRING     0
+#define TJSON_NUMBER     1
+#define TJSON_OBJECT     2
+#define TJSON_ARRAY      3
+#define TJSON_BOOL       4
+#define TJSON_NULL       5
 
-#define TJSON_OUT_TOKEN 0
-#define TJSON_IN_TOKEN 1
+#define TJSON_OUT_TOKEN          0
+#define TJSON_IN_TOKEN           1
 
-#define TJSON_OUT_ESCAPE_CHAR 0
-#define TJSON_IN_ESCAPE_CHAR 1
+#define TJSON_OUT_ESCAPE_CHAR    0
+#define TJSON_IN_ESCAPE_CHAR     1
 
 
 typedef struct __json
