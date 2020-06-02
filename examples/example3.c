@@ -20,32 +20,17 @@ int main()
 	char *stream = NULL;
 
 	stream = tjson_read_file(json_file);
-	printf("%s\n", stream);
+	printf("ORIGINAL: %s", stream);
 
-	int status = 0; // 1 IN 0 OUT
-	
-	char c;
-	while (*stream != '\0'){
-		c = *stream;
+	char *token;
+	int token_size;
 
-		if (status == 0 && isspace(c)) {
-			stream++;
-			continue;
-		}
-		
-		switch (c) {
-		case '"':
-			status = (status == 1) ? 0 : 1;
-			break;		
-		default:
-			break;
-		}
+	token_size = _tjson_tokenize(stream, &token);	
+	printf("KEY: .%s.\n", token);
 
-		printf("%c", c);
-		stream++;
-	}
+	stream += token_size;
+	token_size = _tjson_tokenize(stream, &token);
+	printf("VALUE: .%s.\n", token);
 
-	//printf("%s\n", stream);
-	printf("\n");
 	return 0;
 }
