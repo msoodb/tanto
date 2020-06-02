@@ -27,8 +27,9 @@ int main(int argc, char* argv[])
 	}
 
 	printf("%s: %s\n", "FILE", json_file);
-	stream = tjson_read_file(json_file);
 	
+	stream = tjson_read_file(json_file);
+
 	TJSON_t *json = NULL;
 	TJSON_INIT(&json);
 

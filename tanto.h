@@ -121,6 +121,7 @@ TJSON_t *__tjson_create_node_empty(char *key, int v_type)
 {
 	TJSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
 	if (node == NULL) return NULL;
+
 	
 	node->child = NULL;
 	node->next = NULL;
@@ -131,10 +132,11 @@ TJSON_t *__tjson_create_node_empty(char *key, int v_type)
 	node->v_number = 0;
 	node->v_bool = false;
 
+	
 	if (key != NULL) {
 		size_t z;
-		z = strlen(key);
-		node->key = (char *)malloc(sizeof(char) * (z+1));
+		z = strlen(key);		
+		node->key = (char *)malloc(sizeof(char) * (z+1));		
 		memcpy(node->key, key, z);
 		node->key[z] = '\0';
 	}
@@ -143,7 +145,7 @@ TJSON_t *__tjson_create_node_empty(char *key, int v_type)
 }
 
 TJSON_t *tjson_create_node_string(char *key, char *v_string)
-{
+{	
 	TJSON_t *node = __tjson_create_node_empty(key, TJSON_STRING);
 	if (node == NULL) return NULL;
 
@@ -362,10 +364,10 @@ int __is_numeric(const char *s)
 	return *p == '\0';
 }
 
-/* TO DO : fix "malloc(): invalid size (unsorted) Aborted (core dumped)". */
 int __tjson_tokenize(const char *stream, char **token)
 {	
 	int token_status;
+	int token_size;
 	int escape_status;
 	int finish;	
 	int step;
@@ -373,21 +375,23 @@ int __tjson_tokenize(const char *stream, char **token)
 	*token = (char *)malloc(sizeof(char));	
 	if (*token == NULL) return -1;
 	**token = '\0';
+	token_size = 1;
 
 	/* 
 	 * DELETE this useless piece of shit and OPEN UP GATES of HELL, 
 	 * or FIND and DESTROY the "malloc(): invalid size (unsorted)
 	 * Aborted (core dumped)" BUG. 
 	 */
-	char *useless;
+	/*char *useless;
 	useless = (char *)malloc(sizeof(char));
 	if (useless == NULL) return -1;
-	*useless = '\0';
+	*useless = '\0';*/
 		
 	token_status = TJSON_OUT_TOKEN;
 	escape_status = TJSON_OUT_ESCAPE_CHAR;
 	finish = step = 0;
-
+	
+	
 	char c;
 	while ((finish == 0) && ((c = *(stream + step)) != '\0') ) {
 		
@@ -400,20 +404,24 @@ int __tjson_tokenize(const char *stream, char **token)
 		case '"':
 			if (token_status == TJSON_OUT_TOKEN) {
 				token_status = TJSON_IN_TOKEN;
+				*token = (char *)realloc(*token, ++token_size * sizeof(char));
 				strncat(*token, &c, 1);
 			}
 			else if (escape_status == TJSON_OUT_ESCAPE_CHAR) {
 				finish = 1;
+				*token = (char *)realloc(*token, ++token_size * sizeof(char));
 				strncat(*token, &c, 1);
 			}
 			else {
 				escape_status = TJSON_OUT_ESCAPE_CHAR;
+				*token = (char *)realloc(*token, ++token_size * sizeof(char));
 				strncat(*token, &c, 1);
 			}				
 			break;
 		case '\\':
 			escape_status = (escape_status == TJSON_IN_ESCAPE_CHAR) ?
 				TJSON_OUT_ESCAPE_CHAR : TJSON_IN_ESCAPE_CHAR;
+			*token = (char *)realloc(*token, ++token_size * sizeof(char));
 			strncat(*token, &c, 1);
 			break;
 		//case '\/':
@@ -425,6 +433,7 @@ int __tjson_tokenize(const char *stream, char **token)
 		case 'u':
 			if (escape_status == TJSON_IN_ESCAPE_CHAR)
 				escape_status = TJSON_OUT_ESCAPE_CHAR;
+			*token = (char *)realloc(*token, ++token_size * sizeof(char));
 			strncat(*token, &c, 1);
 			break;
 		case ',':
@@ -433,6 +442,7 @@ int __tjson_tokenize(const char *stream, char **token)
 			finish = 1;
 			break;
 		default:
+			*token = (char *)realloc(*token, ++token_size * sizeof(char));
 			strncat(*token, &c, 1);
 			break;
 		}			
@@ -492,6 +502,7 @@ int __tjson_lex(char *chunk, TJSON_t **node)
 		key = NULL;
 	}
 	key = __trim_double_quote(key);
+
 		
 	if (__is_numeric(value)) {		
 		v_number = strtod(value, NULL);
@@ -511,8 +522,8 @@ int __tjson_lex(char *chunk, TJSON_t **node)
 		*node = tjson_create_node_object(key);
 	}
 	else {
-		v_string = __trim_double_quote(value);	
-		*node = tjson_create_node_string(key, v_string);
+		v_string = __trim_double_quote(value);		
+		*node = tjson_create_node_string(key, v_string);		
 	}
 success:
 	return 1;
