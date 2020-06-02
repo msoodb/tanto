@@ -27,7 +27,7 @@
 #define _LIBRARY_VERSION    "0.0.1"
 #define _LIBRARY_URL        "https://msoodb.org/tanto"
 
-#define TJSON_INIT(json)     tjson_init((json));
+#define TJSON_INIT(json)     __tjson_init((json));
 
 
 #define TJSON_STRING     0
@@ -65,7 +65,7 @@ typedef struct __stack_node
 } S_NODE_t;
 
 
-void _tjson_erase_node(TJSON_t **node)
+void __tjson_erase_node(TJSON_t **node)
 {	
 	if (*node == NULL) return;
 
@@ -87,11 +87,11 @@ void tjson_erase(TJSON_t **json)
 		current = *json;
 		*json = (*json)->next;
 
-		_tjson_erase_node(&current);
+		__tjson_erase_node(&current);
 	}
 }
 
-void _stack_push(S_NODE_t **stack, TJSON_t *data)
+void __stack_push(S_NODE_t **stack, TJSON_t *data)
 { 
 	S_NODE_t *node = (S_NODE_t *)malloc(sizeof(S_NODE_t));
 	if (node == NULL) return;
@@ -102,7 +102,7 @@ void _stack_push(S_NODE_t **stack, TJSON_t *data)
 	(*stack) = node;
 }
 
-TJSON_t *_stack_pop(S_NODE_t **stack)
+TJSON_t *__stack_pop(S_NODE_t **stack)
 {
 	TJSON_t *data;
 	S_NODE_t *top;
@@ -117,7 +117,7 @@ TJSON_t *_stack_pop(S_NODE_t **stack)
 	return data;
 }
 
-TJSON_t *_tjson_create_node_empty(char *key, int v_type)
+TJSON_t *__tjson_create_node_empty(char *key, int v_type)
 {
 	TJSON_t *node = (TJSON_t*) malloc(sizeof(TJSON_t) * 1);
 	if (node == NULL) return NULL;
@@ -144,7 +144,7 @@ TJSON_t *_tjson_create_node_empty(char *key, int v_type)
 
 TJSON_t *tjson_create_node_string(char *key, char *v_string)
 {
-	TJSON_t *node = _tjson_create_node_empty(key, TJSON_STRING);
+	TJSON_t *node = __tjson_create_node_empty(key, TJSON_STRING);
 	if (node == NULL) return NULL;
 
 	if (v_string != NULL) {
@@ -160,7 +160,7 @@ TJSON_t *tjson_create_node_string(char *key, char *v_string)
 
 TJSON_t *tjson_create_node_number(char *key, double v_number)
 {
-	TJSON_t *node = _tjson_create_node_empty(key, TJSON_NUMBER);
+	TJSON_t *node = __tjson_create_node_empty(key, TJSON_NUMBER);
 	if (node == NULL) return NULL;
 	node->v_number = v_number;
 
@@ -169,7 +169,7 @@ TJSON_t *tjson_create_node_number(char *key, double v_number)
 
 TJSON_t *tjson_create_node_object(char *key)
 {
-	TJSON_t *node = _tjson_create_node_empty(key, TJSON_OBJECT);
+	TJSON_t *node = __tjson_create_node_empty(key, TJSON_OBJECT);
 	if (node == NULL) return NULL;
 
 	return node;
@@ -177,7 +177,7 @@ TJSON_t *tjson_create_node_object(char *key)
 
 TJSON_t *tjson_create_node_array(char *key)
 {
-	TJSON_t *node = _tjson_create_node_empty(key, TJSON_ARRAY);
+	TJSON_t *node = __tjson_create_node_empty(key, TJSON_ARRAY);
 	if (node == NULL) return NULL;
 
 	return node;
@@ -185,7 +185,7 @@ TJSON_t *tjson_create_node_array(char *key)
 
 TJSON_t *tjson_create_node_bool(char *key, bool v_bool)
 {
-	TJSON_t *node = _tjson_create_node_empty(key, TJSON_BOOL);
+	TJSON_t *node = __tjson_create_node_empty(key, TJSON_BOOL);
 	if (node == NULL) return NULL;
 
 	node->v_bool = v_bool;
@@ -194,15 +194,15 @@ TJSON_t *tjson_create_node_bool(char *key, bool v_bool)
 
 TJSON_t *tjson_create_node_null(char *key)
 {
-	TJSON_t *node = _tjson_create_node_empty(key, TJSON_NULL);
+	TJSON_t *node = __tjson_create_node_empty(key, TJSON_NULL);
 	if (node == NULL) return NULL;
 
 	return node;
 }
 
-void tjson_init(TJSON_t **json)
+void __tjson_init(TJSON_t **json)
 {
-	TJSON_t *node = _tjson_create_node_empty(NULL, TJSON_OBJECT);
+	TJSON_t *node = __tjson_create_node_empty(NULL, TJSON_OBJECT);
 	if (node == NULL) return;
 
 	*json = node;
@@ -239,7 +239,7 @@ TJSON_t *tjson_find(TJSON_t *json, char *key)
 	return NULL;
 }
 
-void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
+void __tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 {
 	int comma;
 	comma = 0;
@@ -288,7 +288,7 @@ void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 		
 		if ((json->v_type == TJSON_OBJECT) ||
 		    (json->v_type == TJSON_ARRAY)) {
-			_tjson_print(json->child, fp, json->v_type, level+1);
+			__tjson_print(json->child, fp, json->v_type, level+1);
 		}
 		
 		json = json->next;
@@ -299,11 +299,11 @@ void _tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 
 void tjson_print(TJSON_t *json)
 {
-	_tjson_print(json->child, stdout, json->v_type, 1);
+	__tjson_print(json->child, stdout, json->v_type, 1);
 }
 
 
-void tjson_print_addr(TJSON_t *json)
+void __tjson_print_addr(TJSON_t *json)
 {
 	while (json != NULL) {
 
@@ -313,14 +313,14 @@ void tjson_print_addr(TJSON_t *json)
 		printf("%8p %s", (void *)json->next, "|");
 		printf("%8p %s\n", (void *)json->child, "|");
 		printf("\t%s\n\n", "  --------------------");
-		tjson_print_addr(json->child);
+		__tjson_print_addr(json->child);
 
 		json = json->next;
 	}	
 }
 
 /* TO DO : pass pointer to str, ...(char **str) */
-char *_trim_whitespace(char *str)
+char *__trim_whitespace(char *str)
 {
 	char *end;
 
@@ -336,7 +336,7 @@ char *_trim_whitespace(char *str)
 }
 
 /* TO DO : pass pointer to str, ...(char **str) */
-char *_trim_double_quote(char *str)
+char *__trim_double_quote(char *str)
 {
 	if (str == NULL) return NULL;
 	char *end;
@@ -352,7 +352,7 @@ char *_trim_double_quote(char *str)
 	return str;
 }
 
-int _is_numeric(const char *s)
+int __is_numeric(const char *s)
 {
 	if (s == NULL || *s == '\0' || isspace(*s))
 		return 0;
@@ -363,7 +363,7 @@ int _is_numeric(const char *s)
 }
 
 
-int _tjson_tokenize(const char *stream, char **token)
+int __tjson_tokenize(const char *stream, char **token)
 {
 	
 	int token_status;
@@ -432,7 +432,7 @@ int _tjson_tokenize(const char *stream, char **token)
 	return step;
 }
 
-int tjson_lex(char *chunk, TJSON_t **node)
+int __tjson_lex(char *chunk, TJSON_t **node)
 {	
 	size_t step;
 	
@@ -478,7 +478,7 @@ int tjson_lex(char *chunk, TJSON_t **node)
 		goto failure;	
 	memcpy(key, chunk, step);
 	key[step] = '\0';		
-	key = _trim_whitespace(key);
+	key = __trim_whitespace(key);
 	chunk += step + 1;
 	
 	// extract value
@@ -492,17 +492,17 @@ int tjson_lex(char *chunk, TJSON_t **node)
 		value[step] = '\0';	
 		chunk += step + 1;
 
-		value = _trim_whitespace(value);		
+		value = __trim_whitespace(value);		
 	}
 	if (key && value == NULL) {
 		value = key;
 		key = NULL;
 	}
-	key = _trim_double_quote(key);
+	key = __trim_double_quote(key);
 		
 
 
-	if (_is_numeric(value)) {		
+	if (__is_numeric(value)) {		
 		v_number = strtod(value, NULL);
 		*node = tjson_create_node_number(key, v_number);
 	}
@@ -520,7 +520,7 @@ int tjson_lex(char *chunk, TJSON_t **node)
 		*node = tjson_create_node_object(key);
 	}
 	else {
-		v_string = _trim_double_quote(value);	
+		v_string = __trim_double_quote(value);	
 		*node = tjson_create_node_string(key, v_string);
 	}
 	
@@ -564,7 +564,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 		memcpy(chunk, stream, step + 1);
 		chunk[step + 1] = '\0';
 
-		if (tjson_lex(chunk, &new) < 0) {
+		if (__tjson_lex(chunk, &new) < 0) {
 			return -1;
 		}
 
@@ -578,16 +578,16 @@ int tjson_parse(TJSON_t **json, const char *stream)
 		switch (delimiter) {
 		case '{': 			
 		case '[':
-			_stack_push(&stack, current);
+			__stack_push(&stack, current);
 			current = new;			
 			break;		
 		case ']':
 			if (current->v_type != TJSON_ARRAY) return -1;
-			current = _stack_pop(&stack);			
+			current = __stack_pop(&stack);			
 			break;		
 		case '}':
 			if (current->v_type != TJSON_OBJECT) return -1;
-			current = _stack_pop(&stack);			
+			current = __stack_pop(&stack);			
 			break;		
 		default:
 			break;
@@ -640,7 +640,7 @@ void tjson_write_file(char *file, TJSON_t *json)
 	fp = fopen(file, "w");
 	if(fp == NULL) return;
 
-	_tjson_print(json->child, fp, json->v_type, 1);
+	__tjson_print(json->child, fp, json->v_type, 1);
 	
 	fclose(fp);
 }

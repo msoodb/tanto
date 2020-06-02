@@ -25,11 +25,11 @@ int main()
 	char *token;
 	int token_size;
 
-	token_size = _tjson_tokenize(stream, &token);	
+	token_size = __tjson_tokenize(stream, &token);	
 	printf("KEY: .%s.\n", token);
 
 	stream += token_size;
-	token_size = _tjson_tokenize(stream, &token);
+	token_size = __tjson_tokenize(stream, &token);
 	printf("VALUE: .%s.\n", token);
 
 	return 0;
