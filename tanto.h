@@ -37,6 +37,12 @@
 #define TJSON_BOOL            4
 #define TJSON_NULL            5
 
+#define TJSON_OUT_TOKEN 0
+#define TJSON_IN_TOKEN 1
+
+#define TJSON_OUT_ESCAPE_CHAR 0
+#define TJSON_IN_ESCAPE_CHAR 1
+
 
 typedef struct __json
 {
@@ -354,6 +360,76 @@ int _is_numeric(const char *s)
 	char * p;
 	strtod (s, &p);
 	return *p == '\0';
+}
+
+
+int _tjson_tokenize(const char *stream, char **token)
+{
+	
+	int token_status;
+	int escape_status;
+	int finish;	
+	size_t step;
+
+	*token = (char *)malloc(sizeof(char));	
+	if (*token == NULL) return -1;
+	**token = '\0';
+
+	/* DELETE this useless piece of shit and OPEN UP GATES of HELL, or FIND and DESTROY the BUG */
+	char *token2;
+	token2 = (char *)malloc(sizeof(char));
+	if (token2 == NULL) return -1;
+	*token2 = '\0';
+		
+	token_status = TJSON_OUT_TOKEN;
+	escape_status = TJSON_OUT_ESCAPE_CHAR;
+	finish = step = 0;
+
+	char c;
+	while ((finish == 0) && ((c = *(stream + step)) != '\0') ) {
+		
+		if (token_status == TJSON_OUT_TOKEN && (isspace(c) || c == ':')) {
+			step++;
+			continue;
+		}
+
+		switch (c) {
+		case '"':
+			if (token_status == TJSON_OUT_TOKEN) token_status = TJSON_IN_TOKEN;
+			else if (escape_status == TJSON_OUT_ESCAPE_CHAR) finish = 1;
+			else {
+				escape_status = TJSON_OUT_ESCAPE_CHAR;
+				strncat(*token, &c, 1);
+			}				
+			break;
+		case '\\':
+			escape_status = (escape_status == TJSON_IN_ESCAPE_CHAR) ?
+				TJSON_OUT_ESCAPE_CHAR : TJSON_IN_ESCAPE_CHAR;
+			strncat(*token, &c, 1);
+			break;
+		//case '\/':
+		case 'b':
+		case 'f':
+		case 'n':
+		case 'r':
+		case 't':
+		case 'u':
+			if (escape_status == TJSON_IN_ESCAPE_CHAR) escape_status = TJSON_OUT_ESCAPE_CHAR;			
+			strncat(*token, &c, 1);
+			break;
+		case ',':
+		case ']':
+		case '}':
+			finish = 1;
+			break;
+		default:
+			strncat(*token, &c, 1);
+			break;
+		}			
+		step++;
+	}
+
+	return step;
 }
 
 int tjson_lex(char *chunk, TJSON_t **node)
