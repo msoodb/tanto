@@ -16,7 +16,7 @@
 
 int main()
 {
-	char *json_file = "str.txt2";
+	char *json_file = "str.txt";
 	char *stream = NULL;
 
 	stream = tjson_read_file(json_file);
