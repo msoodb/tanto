@@ -1,0 +1,56 @@
+{
+  "Actors": [
+    {
+      "name": "Tom Cruise",
+      "age": 56,
+      "Born At": "Syracuse, NY",
+      "Birthdate": "July 3, 1962",
+      "photo": "https://jsonformatter.org/img/tom-cruise.jpg",
+      "wife": null,
+      "weight": 67.5,
+      "hasChildren": true,
+      "comment": "Was together multiply fruit give \"above\" seasons. Day fowl cattle fowl unto. Female made open \\living over\\ likeness fruit i a you're doesn't after Winged beginning also evening seed can't set image. \tAfter. Creepeth creepeth face them, moveth above. Winged so. Stars have she'd fowl bearing. Were to forth over you're subdue brought, of moveth waters rule days divided so. Unto upon fruit saw beast. Deep abundantly, the Day stars have they're creepeth fly seasons moveth evening, every good heaven bring brought Creeping Kind man green fly given behold waters bring darkness winged given darkness.\n You'll be gathering Seas first tree fowl herb open. Itself were. Great creepeth, you'll meat behold fish man male image, him. Don't and replenish be divided. Seas and earth fruit from set of given unto heaven you heaven unto all face rule, that likeness in from.",
+      "hasGreyHair": false,
+      "children": [
+        "Suri",
+        "Isabella Jane",
+        "Connor"
+      ]
+    },
+    {
+      "name": "Robert Downey Jr.",
+      "age": 53,
+      "Born At": "New York City, NY",
+      "Birthdate": "April 4, 1965",
+      "photo": "https://jsonformatter.org/img/Robert-Downey-Jr.jpg",
+      "wife": "Susan Downey",
+      "weight": 77.1,
+      "ranks": ["a+", "b+", 96],
+      "hasChildren": true,
+      "hasGreyHair": false,
+      "children": [
+        "Indio Falconer",
+        "Avri Roel",
+        "Exton Elias"
+      ]
+    }
+  ],
+  "commander": {
+    "name": "John Smith Jr.",
+    "age": 63,
+    "Born At": "New York City, NY",
+    "Birthdate": "April 4, 1965",
+    "photo": "https://jsonformatter.org/img/Robert-Downey-Jr.jpg",
+    "wife": "Sara Smith",
+    "comment": "Was together multiply fruit give \"above\" seasons. Day fowl cattle fowl unto. Female made open \\living over\\ likeness fruit i a you're doesn't after Winged beginning also evening seed can't set image. \tAfter. Creepeth creepeth face them, moveth above. Winged so.",
+    "weight": 67.8,
+    "hasChildren": false,
+    "hasGreyHair": true,
+    "alive": true,
+    "children": [
+      "Ian Falconer",
+      "Avri Roel",
+      "Exton Elias"
+    ]
+  }
+}
