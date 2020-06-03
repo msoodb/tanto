@@ -55,9 +55,8 @@ int main()
 
 
 	TJSON_t *server = tjson_create_node_object("server");
-	tjson_push(&json, server);
-
 	TJSON_t *path = tjson_create_node_string("path", "http://www.gnu.org/licenses/");
+	tjson_push(&json, server);
 	tjson_push(&json, path);
 
 	
@@ -81,27 +80,25 @@ int main()
 
 
 	TJSON_t *color = tjson_create_node_string("color", "red");
+	TJSON_t *main = tjson_create_node_string("main", "main.c");
 	tjson_push(&json, color);
-
-	TJSON_t *main = tjson_create_node_string("main", "ma: in.c");	
 	tjson_push(&json, main);
 
 
-	TJSON_t *functions = tjson_create_node_array("func\"tions");
+	TJSON_t *functions = tjson_create_node_array("functions");
 	tjson_push(&json, functions);
-	TJSON_t *pop = tjson_create_node_string(NULL, "pop:");	
-	tjson_push(&functions, pop);
-	TJSON_t *push = tjson_create_node_string(NULL, "push");	
-	tjson_push(&functions, push);
+	
+	TJSON_t *pop = tjson_create_node_string(NULL, "pop");
+	TJSON_t *push = tjson_create_node_string(NULL, "push");
 	TJSON_t *delete = tjson_create_node_object(NULL);
+	tjson_push(&functions, pop);	
+	tjson_push(&functions, push);	
 	tjson_push(&functions, delete);
 
 	TJSON_t *delete1 = tjson_create_node_string("delete1", "recursive");	
+	TJSON_t *delete2 = tjson_create_node_string("delete2", "iterative");
 	tjson_push(&delete, delete1);
-
-	TJSON_t *delete2 = tjson_create_node_string("delete2", "iterative");	
 	tjson_push(&delete, delete2);
-
 	
 	
 	tjson_print(json);		
