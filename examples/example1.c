@@ -17,24 +17,23 @@
 /* 
  * read jsno file, parse and print 
 */
-int main(int argc, char* argv[])
+int main()
 {
-	char *json_file = "../json/products.json";
+	//char *json_file = "../json/example1.json";
+	char *json_file = "../../tests/sample_01.json";
 	char *stream = NULL;
 
-	if (argc > 1) json_file = argv[1];
-	printf("%s: %s\n", "FILE", json_file);
-
-	
 	stream = tjson_read_file(json_file);
 
 	TJSON_t *json = NULL;
 	TJSON_INIT(&json);
 
-	if (tjson_parse(&json, stream) < 0) printf("%s: %s\n", "ERROR! while parsing file", json_file);
-	else tjson_print(json);
+	if (tjson_parse(&json, stream) < 0)
+		printf("%s: %s\n", "ERROR! while parsing file", json_file);
+	else
+		tjson_print(json);
 
-	//if (json != NULL) tjson_erase(&json);
+	if (json != NULL) tjson_erase(&json);
 	if (stream != NULL) free(stream);
 
 	return 0;
