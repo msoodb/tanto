@@ -19,7 +19,8 @@
 */
 int main()
 {
-	char *json_file = "../json/example1.json";
+	//char *json_file = "../json/example1.json";
+	char *json_file = "../../tests/sample_01.json";
 	char *stream = NULL;
 
 	stream = tjson_read_file(json_file);

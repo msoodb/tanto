@@ -377,20 +377,9 @@ int __tjson_tokenize(const char *stream, char **token)
 	**token = '\0';
 	token_size = 1;
 
-	/* 
-	 * DELETE this useless piece of shit and OPEN UP GATES of HELL, 
-	 * or FIND and DESTROY the "malloc(): invalid size (unsorted)
-	 * Aborted (core dumped)" BUG. 
-	 */
-	/*char *useless;
-	useless = (char *)malloc(sizeof(char));
-	if (useless == NULL) return -1;
-	*useless = '\0';*/
-		
 	token_status = TJSON_OUT_TOKEN;
 	escape_status = TJSON_OUT_ESCAPE_CHAR;
 	finish = step = 0;
-	
 	
 	char c;
 	while ((finish == 0) && ((c = *(stream + step)) != '\0') ) {
