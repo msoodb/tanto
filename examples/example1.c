@@ -19,8 +19,8 @@
 */
 int main()
 {
-	//char *json_file = "../json/example1.json";
-	char *json_file = "../../tests/sample_01.json";
+	char *json_file = "simple.json";
+	//char *json_file = "../../tests/sample_01.json";
 	char *stream = NULL;
 
 	stream = tjson_read_file(json_file);
@@ -28,13 +28,18 @@ int main()
 	TJSON_t *json = NULL;
 	TJSON_INIT(&json);
 
-	if (tjson_parse(&json, stream) < 0)
-		printf("%s: %s\n", "ERROR! while parsing file", json_file);
-	else
+	int error;
+	if ((error = tjson_parse(&json, stream)) > 0)
+		printf("%s %s %s: %d\n", "ERROR! while parsing file", json_file, "line", error);
+	else 
 		tjson_print(json);
+		
 
-	if (json != NULL) tjson_erase(&json);
-	if (stream != NULL) free(stream);
+	
+
+	//if (json != NULL) tjson_erase(&json);
+	//if (stream != NULL) free(stream);
+	
 
 	return 0;
 }
