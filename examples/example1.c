@@ -28,8 +28,9 @@ int main()
 	TJSON_t *json = NULL;
 	TJSON_INIT(&json);
 
-	if (tjson_parse(&json, stream) < 0)
-		printf("%s: %s\n", "ERROR! while parsing file", json_file);
+	int error;
+	if ((error = tjson_parse(&json, stream)) > 0)
+		printf("%s %s %s: %d\n", "ERROR! while parsing file", json_file, "line", error);
 	else 
 		tjson_print(json);
 		

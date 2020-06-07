@@ -290,6 +290,8 @@ void __tjson_print(TJSON_t *json, FILE *fp, int type, int level)
 		case TJSON_STRING:
 			if (json->v_string != NULL)
 				fprintf(fp, "\"%s\"", json->v_string);
+			else
+				fprintf(fp, "\"%s\"", "");			
 			break;		
 		case TJSON_NUMBER: 
 			fprintf(fp, "%.3lf", json->v_number);
@@ -380,6 +382,8 @@ int tjson_parse(TJSON_t **json, const char *stream)
 	v_bool = false;
 
 
+	int line_number;
+
 	/* flages */
 	bool is_dirty, save;
 	int token_type;	
@@ -398,21 +402,33 @@ int tjson_parse(TJSON_t **json, const char *stream)
 	stream++;
 	current = *json;
 
+
+	line_number = 1;
+
 	char c;
 	do {
 		c = *stream++;
 
 		switch (c) {
 		case ' ':
+			switch (status) {
+			case TJSON_IN_STRING_TOKEN:
+				__append_char(&token, ++token_size, &c);
+				break;
+			default:			
+				break;
+			}
+			break;		
+
 		case '\n':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
 				__append_char(&token, ++token_size, &c);
 				break;
 			default:
-				status = TJSON_OUT_OF_TOKEN;
 				break;
 			}
+			line_number++;
 			break;		
 		case '"':
 			switch (status) {
@@ -433,7 +449,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				is_dirty = true;
 				break;			
 			default:				
-				return -1;
+				return line_number;
 			}			
 			break;
 		case '\\':
@@ -447,7 +463,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				__append_char(&token, ++token_size, &c);
 				break;
 			default:
-				return -1;
+				return line_number;
 			}
 			break;
 		case '{':
@@ -483,7 +499,11 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				break;
 			default:				
 				second = (char *)malloc(sizeof(char) * token_size);
-				strncpy(second, token, token_size);
+				if (token != NULL) {
+					strncpy(second, token, token_size);
+				}else {
+					second = NULL;
+				}
 				status = TJSON_OUT_OF_TOKEN;
 				end_of_array_f = true;
 				save = is_dirty;
@@ -497,7 +517,11 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				break;
 			default:
 				second = (char *)malloc(sizeof(char) * token_size);
-				strncpy(second, token, token_size);
+				if (token != NULL) {
+					strncpy(second, token, token_size);
+				}else {
+					second = NULL;
+				}
 				status = TJSON_OUT_OF_TOKEN;
 				end_of_object_f = true;
 				save = is_dirty;
@@ -525,7 +549,11 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				break;
 			default:				
 				second = (char *)malloc(sizeof(char) * token_size);
-				strncpy(second, token, token_size);
+				if (token != NULL) {
+					strncpy(second, token, token_size);
+				}else {
+					second = NULL;
+				}
 				status = TJSON_OUT_OF_TOKEN;
 				save = is_dirty;
 				break;
@@ -543,7 +571,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 					escape_char_status = TJSON_OUT_OF_ESCAPE_CHAR;
 					break;				
 				default:
-					return -1;
+					return line_number;
 				}
 				break;
 			}
@@ -556,7 +584,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				    && c != '-'
 				    && c != '+'
 				    && c != 'e'
-				    && c != 'E') return -1;
+				    && c != 'E') return line_number;
 				break;
 			case TJSON_IN_BOOL_TOKEN:
 				if (c != 't'
@@ -566,12 +594,12 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				    && c != 'f'
 				    && c != 'a'
 				    && c != 'l'
-				    && c != 's') return -1;
+				    && c != 's') return line_number;
 				break;
 			case TJSON_IN_NULL_TOKEN:
 				if (c != 'n'
 				    && c != 'u'
-				    && c != 'l') return -1;
+				    && c != 'l') return line_number;
 				break;
 			case TJSON_OUT_OF_TOKEN:
 				token = NULL;
@@ -591,8 +619,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				}
 				break;
 			default:
-				return -1;
-				break;
+				return line_number;
 			}			
 			__append_char(&token, ++token_size, &c);
 			break;
@@ -601,13 +628,13 @@ int tjson_parse(TJSON_t **json, const char *stream)
 		if (save) {
 			new = NULL;
 
-			printf("(SAVE) %s:%s\n", first, second);
+			//printf("(SAVE) %s:%s\n", first, second);
 			
 			switch (token_type){
 			case TJSON_STRING:
 				new = tjson_create_node_string(first, second);
 				if (new == NULL) {		
-					return -1;
+					return line_number;
 				}
 				tjson_push(&current, new);
 				break;
@@ -615,7 +642,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				v_number = strtod(second, NULL);
 				new = tjson_create_node_number(first, v_number);
 				if (new == NULL) {
-					return -1;
+					return line_number;
 				}
 				tjson_push(&current, new);
 				break;
@@ -624,37 +651,36 @@ int tjson_parse(TJSON_t **json, const char *stream)
 					v_bool = true ? strcmp(second, "true") == 0 : false;
 					new = tjson_create_node_bool(first, v_bool);
 				}else {
-					return -1;
+					return line_number;
 				}
-				if (new == NULL) return -1;
+				if (new == NULL) return line_number;
 				tjson_push(&current, new);
 				break;
 			case TJSON_NULL:
 				if (strcmp(second, "null") == 0)
 					new = tjson_create_node_null(first);
 				else {					
-					return -1;
+					return line_number;
 				}
-				if (new == NULL) return -1;
+				if (new == NULL) return line_number;
 				tjson_push(&current, new);
 				break;				
 			case TJSON_ARRAY:
 				new = tjson_create_node_array(first);
-				if (new == NULL) return -1;
+				if (new == NULL) return line_number;
 				tjson_push(&current, new);
 				__stack_push(&stack, current);
 				current = new;	
 				break;
 			case TJSON_OBJECT:
 				new = tjson_create_node_object(first);
-				if (new == NULL) return -1;
+				if (new == NULL) return line_number;
 				tjson_push(&current, new);
 				__stack_push(&stack, current);
 				current = new;	
 				break;
 			default:
-				return -1;
-				break;
+				return line_number;
 			}
 
 			if (first != NULL) free(first);
@@ -664,13 +690,13 @@ int tjson_parse(TJSON_t **json, const char *stream)
 		}
 
 		if (end_of_object_f) {			
-			if (current->v_type != TJSON_OBJECT) return -1;
+			if (current->v_type != TJSON_OBJECT) return line_number;
 			current = __stack_pop(&stack);
 			end_of_object_f = false;
 		}
 
 		if (end_of_array_f) {
-			if (current->v_type != TJSON_ARRAY) return -1;
+			if (current->v_type != TJSON_ARRAY) return line_number;
 			current = __stack_pop(&stack);
 			end_of_array_f = false;
 		}
@@ -679,10 +705,10 @@ int tjson_parse(TJSON_t **json, const char *stream)
 
 	if (stack != NULL) {		
 		free(stack);
-		return -1;
+		return line_number;
 	}
 
-	return 1;
+	return 0;
 }
 
 char *tjson_read_file(const char *file)
