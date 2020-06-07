@@ -53,7 +53,7 @@ int main()
 	TJSON_t *json = NULL;
 	TJSON_INIT(&json);
 
-
+	
 	TJSON_t *server = tjson_create_node_object("server");
 	TJSON_t *path = tjson_create_node_string("path", "http://www.gnu.org/licenses/");
 	tjson_push(&json, server);
