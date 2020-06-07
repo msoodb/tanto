@@ -420,12 +420,12 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				if (escape_char_status == TJSON_IN_ESCAPE_CHAR) {
 					__append_char(&token, ++token_size, &c);
 					escape_char_status = TJSON_OUT_OF_ESCAPE_CHAR;
-				}else {
+				}else {					
 					token_type = TJSON_STRING;
-					status = TJSON_OUT_OF_TOKEN;					
+					status = TJSON_OUT_OF_TOKEN;
 				}
 				break;
-			case TJSON_OUT_OF_TOKEN:
+			case TJSON_OUT_OF_TOKEN:				
 				token = NULL;
 				token_size = 1;
 				status = TJSON_IN_STRING_TOKEN;
@@ -434,7 +434,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				break;			
 			default:				
 				return -1;
-			}
+			}			
 			break;
 		case '\\':
 			switch (status) {
@@ -495,9 +495,9 @@ int tjson_parse(TJSON_t **json, const char *stream)
 			case TJSON_IN_STRING_TOKEN:
 				__append_char(&token, ++token_size, &c);
 				break;
-			default:		
+			default:
 				second = (char *)malloc(sizeof(char) * token_size);
-				strncpy(second, token, token_size);				
+				strncpy(second, token, token_size);
 				status = TJSON_OUT_OF_TOKEN;
 				end_of_object_f = true;
 				save = is_dirty;
@@ -511,7 +511,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				break;
 			default:				
 				first = (char *)malloc(sizeof(char) * token_size);
-				strncpy(first, token, token_size);				
+				strncpy(first, token, token_size);
 				status = TJSON_OUT_OF_TOKEN;
 				break;
 			}				
@@ -523,16 +523,16 @@ int tjson_parse(TJSON_t **json, const char *stream)
 			case TJSON_IN_STRING_TOKEN:
 				__append_char(&token, ++token_size, &c);
 				break;
-			default:
+			default:				
 				second = (char *)malloc(sizeof(char) * token_size);
-				strncpy(second, token, token_size);				
+				strncpy(second, token, token_size);
 				status = TJSON_OUT_OF_TOKEN;
 				save = is_dirty;
 				break;
 			}			
 			break;
 		default:
-			if (escape_char_status == TJSON_IN_ESCAPE_CHAR) {			
+			if (escape_char_status == TJSON_IN_ESCAPE_CHAR) {
 				switch (c) {
 				case 'b':
 				case 'f':
@@ -594,16 +594,19 @@ int tjson_parse(TJSON_t **json, const char *stream)
 				return -1;
 				break;
 			}			
-			__append_char(&token, ++token_size, &c);			
-			break;			
+			__append_char(&token, ++token_size, &c);
+			break;
 		}
-
+		
 		if (save) {
 			new = NULL;
-			switch (token_type){ 
+
+			printf("(SAVE) %s:%s\n", first, second);
+			
+			switch (token_type){
 			case TJSON_STRING:
 				new = tjson_create_node_string(first, second);
-				if (new == NULL) {					
+				if (new == NULL) {		
 					return -1;
 				}
 				tjson_push(&current, new);
