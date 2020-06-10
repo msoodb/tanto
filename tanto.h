@@ -27,10 +27,10 @@
 #define _LIBRARY_VERSION    "0.0.1"
 #define _LIBRARY_URL        "https://msoodb.org/tanto"
 
+
 #define TJSON_INIT(json)     __tjson_init((json));
 
 
-#define TJSON_ERROR     -1
 #define TJSON_STRING     0
 #define TJSON_NUMBER     1
 #define TJSON_OBJECT     2
@@ -39,20 +39,25 @@
 #define TJSON_NULL       5
 
 
-/*
- * PARSER definition
- */
-#define TJSON_OUT_OF_TOKEN      -1
-#define TJSON_IN_STRING_TOKEN    0
-#define TJSON_IN_NUMBER_TOKEN    1
-#define TJSON_IN_OBJECT_TOKEN    2
-#define TJSON_IN_ARRAY_TOKEN     3
-#define TJSON_IN_BOOL_TOKEN      4
-#define TJSON_IN_NULL_TOKEN      5
+#define TJSON_IN_WS        -1
+#define TJSON_IN_STRING     0
+#define TJSON_IN_ESC_CHAR   1
+#define TJSON_IN_NUMBER     2
+#define TJSON_IN_BOOL       3
+#define TJSON_IN_NULL       4
 
-#define TJSON_OUT_OF_ESCAPE_CHAR   0
-#define TJSON_IN_ESCAPE_CHAR       1
+const char* keywords[] = {
+	"true",
+	"false",
+	"null"
+};
 
+enum TJSON_TOKEN_TYPE {
+	TJSON_TOKEN_PUNCTUATOR,
+	TJSON_TOKEN_STRING,
+	TJSON_TOKEN_NUMBER,
+	TJSON_TOKEN_KEYWORD
+};
 
 typedef struct __json
 {
@@ -66,6 +71,13 @@ typedef struct __json
 	bool v_bool;	
 
 } TJSON_t;
+
+typedef struct __stack
+{
+	enum TJSON_TOKEN_TYPE type;
+	char *data;	
+	struct __stack *next;
+} TSTACK_t;
 
 
 typedef struct __stack_node
@@ -99,6 +111,71 @@ void tjson_erase(TJSON_t **json)
 
 		__tjson_erase_node(&current);
 	}
+}
+
+void __tstack_push(TSTACK_t **stack, enum TJSON_TOKEN_TYPE type, char *data)
+{
+	TSTACK_t *node = (TSTACK_t *)malloc(sizeof(TSTACK_t));
+	if (node == NULL) return;
+
+	node->type = type;
+	node->data = data;
+	node->next = (*stack);
+
+	(*stack) = node;
+}
+
+TSTACK_t *__tstack_pop(TSTACK_t **stack)
+{	
+	TSTACK_t *top;
+	if (*stack == NULL) return NULL;
+
+	top = *stack;	
+	*stack = top->next;
+
+	return top;
+}
+
+void __tstack_print(TSTACK_t **stack)
+{	
+	TSTACK_t *node;
+	char *str_type;
+	
+	printf("number\ttype\t\tvalue\n");
+	printf("----------------------------------------\n");
+
+	int i = 0;
+	while (*stack != NULL) {
+
+		node = __tstack_pop(stack);
+
+		switch (node->type) {
+		case TJSON_TOKEN_PUNCTUATOR: 
+			str_type = "TJSON_TOKEN_PUNCTUATOR";
+			break;
+		case TJSON_TOKEN_STRING: 
+			str_type = "TJSON_TOKEN_STRING";
+			break;
+		case TJSON_TOKEN_NUMBER: 
+			str_type = "TJSON_TOKEN_NUMBER";
+			break;
+		case TJSON_TOKEN_KEYWORD: 
+			str_type = "TJSON_TOKEN_KEYWORD";
+			break;		
+		default:
+			str_type = "!!!!ERROR!!!!";
+			break;
+		}
+		printf("%d\t%s\t\t%s\n", ++i, str_type, node->data);
+
+		//printf("%d\t\t%s\n", (*stack)->type, (*stack)->data);
+		//*stack = (*stack)->next;
+
+		free(node->data);
+		free(node);
+		node = NULL;
+	}
+	//free(node);
 }
 
 void __stack_push(S_NODE_t **stack, TJSON_t *data)
@@ -342,22 +419,204 @@ void __tjson_print_addr(TJSON_t *json)
 	}	
 }
 
-void __append_char(char **token, size_t token_size, char *c)
+void __append_char(char **token, char *c)
 {
-	size_t s;
-	s = token_size;
-	
 	if (*token == NULL) {
-		*token = (char *)malloc(sizeof(char));			
-		*token = '\0';
-		s = 1;
+		*token = (char *)malloc(sizeof(char));
+		**token = '\0';
 	}
 
-	*token = (char *)realloc(*token, s * sizeof(char));
+	size_t token_size = strlen(*token);
+
+	*token = (char *)realloc(*token, (token_size + 2) * sizeof(char));
 	strncat(*token, c, 1);
 }
 
-int tjson_parse(TJSON_t **json, const char *stream)
+int __tjson_lex(const char *stream)
+{
+	TSTACK_t *stack;
+	enum TJSON_TOKEN_TYPE token_type;
+	char *token;
+	bool is_dirty;
+	bool touch_delimitor;
+	int status;
+	int line_number;
+		
+	stack = NULL;
+	token_type = TJSON_TOKEN_STRING;
+	token = NULL;	
+	is_dirty = false;
+	touch_delimitor = false;
+	status = TJSON_IN_WS;
+	line_number = 1;
+	
+	char c;
+	while ((c = *stream++) != '\0') {
+		
+		switch (c) {
+		case ' ':
+			switch (status) {
+			case TJSON_IN_STRING:
+				__append_char(&token, &c);
+				break;
+			default:
+				if (is_dirty) touch_delimitor = true;
+				status = TJSON_IN_WS;				
+				break;
+			}			
+			break;
+		case '\t':
+		case '\n':
+			switch (status) {
+			case TJSON_IN_STRING:
+				__append_char(&token, &c);
+				break;
+			default:
+				if (is_dirty) touch_delimitor = true;
+				status = TJSON_IN_WS;				
+				break;
+			}
+			line_number++;
+			break;
+		case '"':
+			switch (status) {
+			case TJSON_IN_STRING:	
+				touch_delimitor = true;
+				break;
+			case TJSON_IN_ESC_CHAR:				
+				status = TJSON_IN_STRING;
+				break;
+			case TJSON_IN_WS:
+				status = TJSON_IN_STRING;
+				is_dirty = true;
+				break;
+			default:				
+				break;
+			}
+			token_type = TJSON_TOKEN_STRING;
+			__append_char(&token, &c);
+			break;
+		case '\\':
+			switch (status) {
+			case TJSON_IN_STRING:
+				status = TJSON_IN_ESC_CHAR;
+				break;
+			case TJSON_IN_ESC_CHAR:
+				status = TJSON_IN_STRING;
+				break;
+			default:
+				break;
+			}
+			__append_char(&token, &c);
+			break;
+		case '{':
+		case '[':
+		case ']':
+		case '}':
+		case ':':
+		case ',':
+			switch (status) {
+			case TJSON_IN_STRING:
+				__append_char(&token, &c);
+				break;
+			case TJSON_IN_ESC_CHAR:
+				return line_number;
+			default:				
+				touch_delimitor = true;				
+				break;
+			}
+			break;	
+		default:
+			switch (status) {
+			case TJSON_IN_STRING:
+				break;
+			case TJSON_IN_ESC_CHAR:
+				switch (c) {
+				case 'b':
+				case 'f':
+				case 'n':
+				case 'r':
+				case 't':
+					status = TJSON_IN_STRING;
+					break;				
+				default:
+					return line_number;
+				}
+				break;
+			case TJSON_IN_NUMBER:
+				if (!isdigit(c)
+				    && c != '.'
+				    && c != '-'
+				    && c != '+'
+				    && c != 'e'
+				    && c != 'E') return line_number;
+				break;
+			case TJSON_IN_BOOL:
+				if (c != 't'
+				    && c != 'r'
+				    && c != 'u'
+				    && c != 'e'
+				    && c != 'f'
+				    && c != 'a'
+				    && c != 'l'
+				    && c != 's') return line_number;
+				break;
+			case TJSON_IN_NULL:
+				if (c != 'n'
+				    && c != 'u'
+				    && c != 'l') return line_number;
+				break;
+			case TJSON_IN_WS:
+				token = NULL;				
+				is_dirty = true;
+				if (isdigit(c) || c == '-') {
+					status = TJSON_IN_NUMBER;
+					token_type = TJSON_TOKEN_NUMBER;
+				}
+				else if (c == 't' || c == 'f') {
+					status = TJSON_IN_BOOL;
+					token_type = TJSON_TOKEN_KEYWORD;
+				}
+				else if (c == 'n') {
+					status = TJSON_IN_NULL;
+					token_type = TJSON_TOKEN_KEYWORD;
+				}
+				break;
+			default:
+				return line_number;
+			}			
+			__append_char(&token, &c);
+			break;
+		}
+		
+		if (touch_delimitor) {			
+			if (is_dirty) {
+				__tstack_push(&stack, token_type, token);
+				token = NULL;
+			}
+			if (!isspace(c) && c != '"') {
+				__append_char(&token, &c);
+				__tstack_push(&stack, TJSON_TOKEN_PUNCTUATOR, token);
+			}
+						
+			is_dirty = false;
+			touch_delimitor = false;
+			
+			token = NULL;
+			status = TJSON_IN_WS;
+		}
+	}
+
+	__tstack_print(&stack);
+
+	if (stack != NULL) free(stack);
+	if (token != NULL) free(token);	
+
+	return 0;
+}
+
+#ifdef __IGNORE_
+int tjson_lex(TJSON_t **json, const char *stream)
 {
 	if (stream == NULL) return -1;
 
@@ -384,7 +643,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 
 	int line_number;
 
-	/* flages */
+	// flages
 	bool is_dirty, save;
 	int token_type;	
 	int end_of_object_f, end_of_array_f;
@@ -415,11 +674,12 @@ int tjson_parse(TJSON_t **json, const char *stream)
 			case TJSON_IN_STRING_TOKEN:
 				__append_char(&token, ++token_size, &c);
 				break;
-			default:			
+			default:
+				if (is_dirty) return line_number;
+				status = TJSON_OUT_OF_TOKEN;
 				break;
 			}
-			break;		
-
+			break;
 		case '\n':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
@@ -710,6 +970,7 @@ int tjson_parse(TJSON_t **json, const char *stream)
 
 	return 0;
 }
+#endif //__IGNORE_
 
 char *tjson_read_file(const char *file)
 {
