@@ -39,14 +39,12 @@
 #define TJSON_NULL       5
 
 
-#define TJSON_IN_WS        -1
-#define TJSON_IN_STRING     0
-#define TJSON_IN_ESC_CHAR   1
-#define TJSON_IN_NUMBER     2
-#define TJSON_IN_BOOL       3
-#define TJSON_IN_NULL       4
+#define TJSON_IN_WHITE_SPACE      -1
+#define TJSON_IN_STRING            0
+#define TJSON_IN_ESCAPE_CHAR       1
+#define TJSON_IN_IDENTIFIER        2
 
-const char* keywords[] = {
+const char *__tjson_keyword[] = {
 	"true",
 	"false",
 	"null"
@@ -55,6 +53,7 @@ const char* keywords[] = {
 enum TJSON_TOKEN_TYPE {
 	TJSON_TOKEN_PUNCTUATOR,
 	TJSON_TOKEN_STRING,
+	TJSON_TOKEN_IDENTIFIER,
 	TJSON_TOKEN_NUMBER,
 	TJSON_TOKEN_KEYWORD
 };
@@ -148,6 +147,10 @@ void __tstack_print(TSTACK_t **stack)
 	while (*stack != NULL) {
 
 		node = __tstack_pop(stack);
+		if (node == NULL || node->data == NULL) {
+			printf("%d\t%s\t\t%s\n", ++i, "!!!!ERROR!!!!", "!!!!ERROR!!!!");
+			return;
+		}
 
 		switch (node->type) {
 		case TJSON_TOKEN_PUNCTUATOR: 
@@ -156,26 +159,22 @@ void __tstack_print(TSTACK_t **stack)
 		case TJSON_TOKEN_STRING: 
 			str_type = "TJSON_TOKEN_STRING";
 			break;
-		case TJSON_TOKEN_NUMBER: 
-			str_type = "TJSON_TOKEN_NUMBER";
-			break;
-		case TJSON_TOKEN_KEYWORD: 
-			str_type = "TJSON_TOKEN_KEYWORD";
+		case TJSON_TOKEN_IDENTIFIER: 
+			str_type = "TJSON_TOKEN_IDENTIFIER";
 			break;		
 		default:
 			str_type = "!!!!ERROR!!!!";
 			break;
 		}
+		
 		printf("%d\t%s\t\t%s\n", ++i, str_type, node->data);
 
-		//printf("%d\t\t%s\n", (*stack)->type, (*stack)->data);
-		//*stack = (*stack)->next;
+		if (node != NULL && node->data != NULL) free(node->data);
+		if (node != NULL) free(node);
 
-		free(node->data);
-		free(node);
 		node = NULL;
 	}
-	//free(node);
+	if (node != NULL) free(node);
 }
 
 void __stack_push(S_NODE_t **stack, TJSON_t *data)
@@ -447,7 +446,7 @@ int __tjson_lex(const char *stream)
 	token = NULL;	
 	is_dirty = false;
 	touch_delimitor = false;
-	status = TJSON_IN_WS;
+	status = TJSON_IN_WHITE_SPACE;
 	line_number = 1;
 	
 	char c;
@@ -461,7 +460,7 @@ int __tjson_lex(const char *stream)
 				break;
 			default:
 				if (is_dirty) touch_delimitor = true;
-				status = TJSON_IN_WS;				
+				status = TJSON_IN_WHITE_SPACE;				
 				break;
 			}			
 			break;
@@ -473,7 +472,7 @@ int __tjson_lex(const char *stream)
 				break;
 			default:
 				if (is_dirty) touch_delimitor = true;
-				status = TJSON_IN_WS;				
+				status = TJSON_IN_WHITE_SPACE;				
 				break;
 			}
 			line_number++;
@@ -483,10 +482,10 @@ int __tjson_lex(const char *stream)
 			case TJSON_IN_STRING:	
 				touch_delimitor = true;
 				break;
-			case TJSON_IN_ESC_CHAR:				
+			case TJSON_IN_ESCAPE_CHAR:				
 				status = TJSON_IN_STRING;
 				break;
-			case TJSON_IN_WS:
+			case TJSON_IN_WHITE_SPACE:
 				status = TJSON_IN_STRING;
 				is_dirty = true;
 				break;
@@ -499,9 +498,9 @@ int __tjson_lex(const char *stream)
 		case '\\':
 			switch (status) {
 			case TJSON_IN_STRING:
-				status = TJSON_IN_ESC_CHAR;
+				status = TJSON_IN_ESCAPE_CHAR;
 				break;
-			case TJSON_IN_ESC_CHAR:
+			case TJSON_IN_ESCAPE_CHAR:
 				status = TJSON_IN_STRING;
 				break;
 			default:
@@ -519,7 +518,7 @@ int __tjson_lex(const char *stream)
 			case TJSON_IN_STRING:
 				__append_char(&token, &c);
 				break;
-			case TJSON_IN_ESC_CHAR:
+			case TJSON_IN_ESCAPE_CHAR:
 				return line_number;
 			default:				
 				touch_delimitor = true;				
@@ -530,7 +529,7 @@ int __tjson_lex(const char *stream)
 			switch (status) {
 			case TJSON_IN_STRING:
 				break;
-			case TJSON_IN_ESC_CHAR:
+			case TJSON_IN_ESCAPE_CHAR:
 				switch (c) {
 				case 'b':
 				case 'f':
@@ -543,47 +542,14 @@ int __tjson_lex(const char *stream)
 					return line_number;
 				}
 				break;
-			case TJSON_IN_NUMBER:
-				if (!isdigit(c)
-				    && c != '.'
-				    && c != '-'
-				    && c != '+'
-				    && c != 'e'
-				    && c != 'E') return line_number;
-				break;
-			case TJSON_IN_BOOL:
-				if (c != 't'
-				    && c != 'r'
-				    && c != 'u'
-				    && c != 'e'
-				    && c != 'f'
-				    && c != 'a'
-				    && c != 'l'
-				    && c != 's') return line_number;
-				break;
-			case TJSON_IN_NULL:
-				if (c != 'n'
-				    && c != 'u'
-				    && c != 'l') return line_number;
-				break;
-			case TJSON_IN_WS:
+			case TJSON_IN_WHITE_SPACE:
 				token = NULL;				
 				is_dirty = true;
-				if (isdigit(c) || c == '-') {
-					status = TJSON_IN_NUMBER;
-					token_type = TJSON_TOKEN_NUMBER;
-				}
-				else if (c == 't' || c == 'f') {
-					status = TJSON_IN_BOOL;
-					token_type = TJSON_TOKEN_KEYWORD;
-				}
-				else if (c == 'n') {
-					status = TJSON_IN_NULL;
-					token_type = TJSON_TOKEN_KEYWORD;
-				}
+				status = TJSON_IN_IDENTIFIER;
+				token_type = TJSON_TOKEN_IDENTIFIER;				
 				break;
 			default:
-				return line_number;
+				break;
 			}			
 			__append_char(&token, &c);
 			break;
@@ -603,7 +569,7 @@ int __tjson_lex(const char *stream)
 			touch_delimitor = false;
 			
 			token = NULL;
-			status = TJSON_IN_WS;
+			status = TJSON_IN_WHITE_SPACE;
 		}
 	}
 
