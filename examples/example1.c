@@ -23,19 +23,16 @@ int main()
 	char *stream = NULL;
 
 	stream = tjson_read_file(json_file);
-	test_lex(stream);
-	
+		
 	//TJSON_t *json = NULL;
 	//TJSON_INIT(&json);
 
-	//int error;
-	//if ((error = tjson_lex(&json, stream)) > 0)
-	//	printf("%s %s %s: %d\n", "ERROR! while parsing file", json_file, "line", error);
+	int error;
+	if ((error = __tjson_lex(stream)) > 0)
+		printf("%s %s %s: %d\n", "ERROR! while parsing file", json_file, "line", error);
 	//else 
 	//	tjson_print(json);
-		
-
-	
+			
 
 	//if (json != NULL) tjson_erase(&json);
 	if (stream != NULL) free(stream);
