@@ -44,6 +44,7 @@
 #define TJSON_IN_ESCAPE_CHAR       1
 #define TJSON_IN_IDENTIFIER        2
 
+const int __tjson_keyword_count = 3;
 const char *__tjson_keyword[] = {
 	"true",
 	"false",
@@ -161,7 +162,13 @@ void __tstack_print(TSTACK_t **stack)
 			break;
 		case TJSON_TOKEN_IDENTIFIER: 
 			str_type = "TJSON_TOKEN_IDENTIFIER";
-			break;		
+			break;
+		case TJSON_TOKEN_NUMBER: 
+			str_type = "TJSON_TOKEN_NUMBER";
+			break;
+		case TJSON_TOKEN_KEYWORD: 
+			str_type = "TJSON_TOKEN_KEYWORD";
+			break;
 		default:
 			str_type = "!!!!ERROR!!!!";
 			break;
@@ -418,7 +425,29 @@ void __tjson_print_addr(TJSON_t *json)
 	}	
 }
 
-void __append_char(char **token, char *c)
+int __tjson_is_keyword(const char *s)
+{
+	if (s == NULL || *s == '\0' || isspace(*s))
+		return 0;
+
+	int i;
+	for (i = 0; i < __tjson_keyword_count; ++i) {
+		if (strcmp(s, __tjson_keyword[i]) == 0)
+			return 1;
+	}
+	return 0;
+}
+
+int __tjson_is_numeric(const char *s)
+{
+	if (s == NULL || *s == '\0' || isspace(*s))
+		return 0;
+	char *p;
+	strtod (s, &p);
+	return *p == '\0';
+}
+
+void __tjson_append_char(char **token, char *c)
 {
 	if (*token == NULL) {
 		*token = (char *)malloc(sizeof(char));
@@ -456,7 +485,7 @@ int __tjson_lex(const char *stream)
 		case ' ':
 			switch (status) {
 			case TJSON_IN_STRING:
-				__append_char(&token, &c);
+				__tjson_append_char(&token, &c);
 				break;
 			default:
 				if (is_dirty) touch_delimitor = true;
@@ -468,7 +497,7 @@ int __tjson_lex(const char *stream)
 		case '\n':
 			switch (status) {
 			case TJSON_IN_STRING:
-				__append_char(&token, &c);
+				__tjson_append_char(&token, &c);
 				break;
 			default:
 				if (is_dirty) touch_delimitor = true;
@@ -493,7 +522,7 @@ int __tjson_lex(const char *stream)
 				break;
 			}
 			token_type = TJSON_TOKEN_STRING;
-			__append_char(&token, &c);
+			__tjson_append_char(&token, &c);
 			break;
 		case '\\':
 			switch (status) {
@@ -506,7 +535,7 @@ int __tjson_lex(const char *stream)
 			default:
 				break;
 			}
-			__append_char(&token, &c);
+			__tjson_append_char(&token, &c);
 			break;
 		case '{':
 		case '[':
@@ -516,7 +545,7 @@ int __tjson_lex(const char *stream)
 		case ',':
 			switch (status) {
 			case TJSON_IN_STRING:
-				__append_char(&token, &c);
+				__tjson_append_char(&token, &c);
 				break;
 			case TJSON_IN_ESCAPE_CHAR:
 				return line_number;
@@ -551,20 +580,24 @@ int __tjson_lex(const char *stream)
 			default:
 				break;
 			}			
-			__append_char(&token, &c);
+			__tjson_append_char(&token, &c);
 			break;
 		}
-		
-		if (touch_delimitor) {			
-			if (is_dirty) {
-				__tstack_push(&stack, token_type, token);
-				token = NULL;
-			}
-			if (!isspace(c) && c != '"') {
-				__append_char(&token, &c);
+
+		if (touch_delimitor && is_dirty
+		    && token_type == TJSON_TOKEN_IDENTIFIER) {
+			if (__tjson_is_numeric(token)) token_type = TJSON_TOKEN_NUMBER;
+			else if (__tjson_is_keyword(token)) token_type = TJSON_TOKEN_KEYWORD;
+		}		
+		if (touch_delimitor && is_dirty) {
+			__tstack_push(&stack, token_type, token);
+			token = NULL;
+		}		
+		if (touch_delimitor && !isspace(c) && c != '"') {
+				__tjson_append_char(&token, &c);
 				__tstack_push(&stack, TJSON_TOKEN_PUNCTUATOR, token);
-			}
-						
+		}
+		if (touch_delimitor) {			
 			is_dirty = false;
 			touch_delimitor = false;
 			
@@ -638,7 +671,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case ' ':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:
 				if (is_dirty) return line_number;
@@ -649,7 +682,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case '\n':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:
 				break;
@@ -660,7 +693,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
 				if (escape_char_status == TJSON_IN_ESCAPE_CHAR) {
-					__append_char(&token, ++token_size, &c);
+					__tjson_append_char(&token, ++token_size, &c);
 					escape_char_status = TJSON_OUT_OF_ESCAPE_CHAR;
 				}else {					
 					token_type = TJSON_STRING;
@@ -686,7 +719,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 				}else {
 					escape_char_status = TJSON_OUT_OF_ESCAPE_CHAR;
 				}
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:
 				return line_number;
@@ -695,7 +728,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case '{':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:				
 				status = TJSON_OUT_OF_TOKEN;
@@ -708,7 +741,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case '[':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:				
 				status = TJSON_OUT_OF_TOKEN;
@@ -721,7 +754,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case ']':			
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:				
 				second = (char *)malloc(sizeof(char) * token_size);
@@ -739,7 +772,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case '}':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:
 				second = (char *)malloc(sizeof(char) * token_size);
@@ -757,7 +790,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case ':':
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:				
 				first = (char *)malloc(sizeof(char) * token_size);
@@ -771,7 +804,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 		case ',':			
 			switch (status) {
 			case TJSON_IN_STRING_TOKEN:
-				__append_char(&token, ++token_size, &c);
+				__tjson_append_char(&token, ++token_size, &c);
 				break;
 			default:				
 				second = (char *)malloc(sizeof(char) * token_size);
@@ -793,7 +826,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 				case 'n':
 				case 'r':
 				case 't':
-					__append_char(&token, ++token_size, &c);
+					__tjson_append_char(&token, ++token_size, &c);
 					escape_char_status = TJSON_OUT_OF_ESCAPE_CHAR;
 					break;				
 				default:
@@ -847,7 +880,7 @@ int tjson_lex(TJSON_t **json, const char *stream)
 			default:
 				return line_number;
 			}			
-			__append_char(&token, ++token_size, &c);
+			__tjson_append_char(&token, ++token_size, &c);
 			break;
 		}
 		
