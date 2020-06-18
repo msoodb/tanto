@@ -18,6 +18,8 @@
  * create this json object and print on stdout or file.
  *
 {
+  "color": "red",
+  "order": 63928.120,
   "functions": [
     {
       "delete2": "iterative",
@@ -27,8 +29,6 @@
     "pop"
   ],
   "main": "main.c",
-  "color": "red",
-  "order": 63928.120,
   "parser": "tanto",
   "path": "http://www.gnu.org/licenses/",
   "server": {
@@ -53,19 +53,21 @@ int main()
 	TJSON_t *json = NULL;
 	TJSON_INIT(&json);
 
+	TJSON_t *root = tjson_create_node_object(NULL);
+	tjson_push(&json, root);
 	
 	TJSON_t *server = tjson_create_node_object("server");
 	TJSON_t *path = tjson_create_node_string("path", "http://www.gnu.org/licenses/");
-	tjson_push(&json, server);
-	tjson_push(&json, path);
+	tjson_push(&root, server);
+	tjson_push(&root, path);
 
 	
 	TJSON_t *parser = tjson_create_node_string("parser", "tanto");
 	TJSON_t *order = tjson_create_node_number("order", 63928.12);
 	TJSON_t *library = tjson_create_node_object("library");
 	TJSON_t *lex = tjson_create_node_string("lex", "lexer");	
-	tjson_push(&json, parser);
-	tjson_push(&json, order);
+	tjson_push(&root, parser);
+	tjson_push(&root, order);
 	tjson_push(&server, library);
 	tjson_push(&server, lex);
 
@@ -78,15 +80,8 @@ int main()
 	tjson_push(&library, support);
 	tjson_push(&library, address);
 
-
-	TJSON_t *color = tjson_create_node_string("color", "red");
-	TJSON_t *main = tjson_create_node_string("main", "main.c");
-	tjson_push(&json, color);
-	tjson_push(&json, main);
-
-
 	TJSON_t *functions = tjson_create_node_array("functions");
-	tjson_push(&json, functions);
+	tjson_push(&root, functions);
 	
 	TJSON_t *pop = tjson_create_node_string(NULL, "pop");
 	TJSON_t *push = tjson_create_node_string(NULL, "push");
@@ -100,9 +95,12 @@ int main()
 	tjson_push(&delete, delete1);
 	tjson_push(&delete, delete2);
 	
+	TJSON_t *color = tjson_create_node_string("color", "red");
+	TJSON_t *main = tjson_create_node_string("main", "main.c");
+	tjson_push(&root, color);
+	tjson_push(&root, main);
 	
 	tjson_print(json);		
-	//tjson_write_file("../json/example2-output.json", json);
 
 	if (json != NULL) tjson_erase(&json);
 

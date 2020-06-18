@@ -22,21 +22,26 @@ int main()
 	char *json_file = "simple.json";
 	char *stream = NULL;
 
-	stream = tjson_read_file(json_file);
-		
-	//TJSON_t *json = NULL;
-	//TJSON_INIT(&json);
+	tjson_read_file(json_file, &stream);
+
+	TJSON_t *json = NULL;
+	TJSON_INIT(&json);
 
 	int error;
-	if ((error = __tjson_lex(stream)) > 0)
+	if ((error = tjson_parse(&json, &stream)) > 0)
 		printf("%s %s %s: %d\n", "ERROR! while parsing file", json_file, "line", error);
-	//else 
-	//	tjson_print(json);
-			
+	else 
+		tjson_print(json);
 
-	//if (json != NULL) tjson_erase(&json);
-	if (stream != NULL) free(stream);
 	
+	if (json != NULL) {
+		tjson_erase(&json);
+		json = NULL;
+	}
+	if (stream != NULL) {
+		free(stream);
+		stream = NULL;
+	}
 
 	return 0;
 }
